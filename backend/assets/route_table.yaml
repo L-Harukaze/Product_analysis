@@ -1,0 +1,83 @@
+# 路由表（ARCHITECTURE 7.2：D1-D7 问题域扫描 + 域内方法选择 = 指纹 × 路由表查表，无 LLM）
+# 9.2 校验 2：本表引用的方法编号必须存在于 methods/（注册表启动校验）
+# V1 预置（对齐演示场景），Owner 实跑后可增补规则——路由缺陷的修复入口（PRD 12 三归因）
+domains:
+  D1: 市场结构
+  D2: 定价机制
+  D3: 竞争互动
+  D4: 成本结构
+  D5: 用户价值
+  D6: 信息结构
+  D7: 周期相位
+
+# 域内无方法命中时的显式登记（不静默缺席，K07）
+not_applied_reasons:
+  default: 域内方法均未命中指纹条件 → 不适用（系统已显式记录此判断，而非静默跳过）
+  D7: 产品差异化强 → 周期相位分析不适用（系统已显式记录此判断，而非静默跳过）
+
+# 采集时间窗（6.1 硬规则 5：路由决定）
+default_time_window: 近 24 个月（产品上市前 3 个月至今）
+
+rules:
+  - method: M01
+    domain: D1
+    form: 标准
+    when: {always: true}
+    reason: 默认执行——分析市场集中度与竞争格局
+
+  - method: M02
+    domain: D4
+    form: 标准
+    when: {always: true}
+    reason: 默认执行——分析规模效应与成本下降规律
+
+  - method: M03
+    domain: D2
+    form: 标准
+    when: {always: true}
+    reason_by_f1_price_tier:
+      低价: 价格档位偏低 → 性价比竞争主导版本菜单，适合阶梯定价分析
+      中价: 价格档位中等 → 消费者对版本间价差敏感，适合阶梯定价分析
+      高价: 价格档位偏高 → 版本间价差跨度大，适合阶梯定价分析
+
+  - method: M04
+    domain: D2
+    form: 叠加
+    when: {f1_price_tier: [高价]}
+    reason: 价格档位偏高 → 锚定效应与参照点依赖显著，叠加锚定话语分析（边界判定已留痕）
+
+  - method: M05
+    domain: D3
+    form: 标准
+    when: {f2: [搜索品]}
+    reason: 属于搜索品（购买前可充分比价）→ 适合分析竞品价格联动效应
+
+  - method: M06
+    domain: D5
+    form: 叠加
+    when: {f4: [强]}
+    reason: 生态绑定强 → 在用户价值域叠加「总持有成本」视角（边界判定已留痕）
+
+  - method: M07
+    domain: D6
+    form: 标准
+    when: {f2: [搜索品]}
+    reason: 属于搜索品 → 适合分析信息如何影响购买决策
+
+  - method: M08
+    domain: D2
+    form: 叠加
+    when: {f5: [高, 中]}
+    reason: 政策敏感 → 价格受补贴/关税等政策断点影响显著，叠加政策断点分析（边界判定已留痕）
+
+  - method: M09
+    domain: D5
+    form: 叠加
+    when: {f4: [强]}
+    reason: 生态绑定强 → 叠加「保值率与金融杠杆」视角（边界判定通过）
+
+  - method: S4
+    domain: D7
+    form: 标准
+    when: {f3: [弱, 无]}
+    reason: 产品同质化程度高 → 价格由供需周期主导，适合蛛网周期与成本传导分析

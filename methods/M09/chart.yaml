@@ -1,0 +1,10 @@
+# M09 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M09
+
+bindings:
+  - source_table: [residual_quotes, retention_curve]
+    template: 表格输出（v0.1）
+    variant_rule: T-RESIDUAL-01（车龄-保值率衰减曲线）为 v0.2 候选模板；数据<3时点不成线仅表格；RESIDUAL_DATA_MISSING 时仅行业基准表
+    required: false
+
+adaptation_log_required: true

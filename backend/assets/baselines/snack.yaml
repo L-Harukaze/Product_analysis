@@ -1,0 +1,30 @@
+# 品类基线表·表H（零食）：三只松鼠备胎品类（ARCHITECTURE 7.1 V1 范围）
+category: 零食
+source_url: https://example.com/baseline/snack-v1
+confidence: 第三方
+caliber: 中国大陆市场，2024 统计口径
+
+price_distribution:
+  p25: 10
+  p50: 25
+  p75: 60
+replacement_cycle_months: 1    # 快消高频复购
+
+price_tiers:
+  低价: {pct_max: 25}
+  中价: {pct_min: 25, pct_max: 75}
+  高价: {pct_min: 75}
+frequency_tiers:
+  高频: {max_months: 18}
+  中频: {min_months: 18, max_months: 36}
+  低频: {min_months: 36}
+
+differentiation_anchor:
+  强: 三只松鼠（品牌叙事强代表）
+  弱: 散装坚果（同质化代表）
+ecosystem_anchor:
+  无: 多数零食品牌（无生态绑定）
+
+conservative:
+  F3: 中
+  F4: 无

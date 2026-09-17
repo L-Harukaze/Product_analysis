@@ -1,0 +1,10 @@
+# M02 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M02
+
+bindings:
+  - source_table: [production_cost_series, regression_result]
+    template: 表格输出（v0.1）
+    variant_rule: T-LOGFIT-01（对数拟合散点+拟合线）为 v0.2 候选模板，未批准前不渲染图形；回归失效（REGRESSION_INFEASIBLE）时仅文字结论
+    required: false
+
+adaptation_log_required: true

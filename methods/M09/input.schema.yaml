@@ -1,0 +1,26 @@
+# M09 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M09
+version: v0.1
+
+tables:
+  I_residual:
+    desc: 二手报价序列（本方法主表，预期未获证）——挂牌/成交口径强制注记
+    consumed_by: [STEP1, STEP2, STEP3]
+    required: false
+    fields:
+      object: {type: string, required: true, note: 车型/款型}
+      age_months: {type: integer, required: true, note: 车龄（月）}
+      mileage: {type: number, required: false, unit: 万公里}
+      asking_price: {type: number, required: true, unit: 万元}
+      msrp: {type: number, required: true, unit: 万元, note: 原车指导价}
+      price_type: {enum: [挂牌, 成交], required: true, note: C1口径注记}
+
+  N_industry_benchmark:
+    desc: 行业基准保值率（降级形态用，第三方口径）
+    consumed_by: [STEP4]
+    required: false
+    fields:
+      segment: {type: string, required: true, note: 车型级别}
+      age_months: {type: integer, required: true}
+      retention_band: {type: string, required: true, note: 保值率区间%}

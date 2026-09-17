@@ -1,0 +1,86 @@
+# 全局图表模板注册表 v0.2
+# 三层治理：模板层锁类型与语义映射 / 变体层枚举合法形态 / 实例层模型仅填值写注记
+# 各方法包 chart.yaml 只做"中间表→模板+变体选择规则"绑定，不重复定义模板
+
+global_rules:
+  - 时间恒在x轴
+  - 份额恒为堆叠语义
+  - 序列断链禁插值，断点标注或移出堆叠
+  - 雷达图不入库（专业受众观感负分）
+  - 口径偏差→同语义重映射+强制注记；字段缺失→授权降级变体
+  - 每处实例微调记适配日志，图表进溯源链
+
+# kind = 模板层锁死的图形类型（实例层无选型权，PRD 9.3）；stack = 堆叠语义（份额恒堆叠）
+templates:
+  T-LADDER-01:
+    name: 版本阶梯图
+    kind: bar
+    semantics: 档位-价格阶梯结构
+    variants:
+      V3: 档位≥3的阶梯形态（默认）
+    source: M03实证
+
+  T-SCATTER-02:
+    name: 增量定价散点
+    kind: scatter
+    semantics: ΔP vs ΔCost 截留结构
+    variants:
+      V0: 观测<3或结构不可得（基础散点）
+      V1: ≥3且结构可得（气泡=结构占比）
+    source: M03实证
+
+  T-LINE-03:
+    name: 价格-权益时间线
+    kind: line
+    semantics: 有效价随时间演化
+    variants:
+      V1: 单带（仅官方价，B_MISSING时）
+      V2: 双带（官方价+精确折算有效价，B_detail时）
+      V2e: 事件带（离散标注非连续曲线，B_PARTIAL_NEWS时，禁插值）
+    source: M03实证
+
+  T-ANCHOR-01:
+    name: 锚点对比图
+    kind: bar
+    semantics: 本产品价 vs 参照价 offset 结构
+    variants:
+      V0: 区间条（参照价带区间注记时）
+      V1: 哑铃（参照价全点估时）
+      V2: 时序（锚≥4且有时序时）
+    spec: 锚时点跨度<1个月（同日簇发）不选V2（M04实证反写）
+    source: M04新增，owner批准入库v0.2
+
+  T-SHARE-01:
+    name: 结构堆叠柱
+    kind: bar
+    stack: true
+    semantics: 份额/结构占比
+    variants:
+      V0: 表格（无数据时）
+      V1: 两期
+      V2: 多期
+    source: M04新增，owner批准入库v0.2
+
+  T-BAND-01:
+    name: 价格带分布图
+    status: v0.2候选（未批准，M01暂用表格输出）
+
+  # —— 以下为各包登记的 v0.2 候选模板（未批准前一律表格输出，编号已注册可被引用）——
+  T-LOGFIT-01:
+    name: 对数拟合散点+拟合线
+    status: v0.2候选（M02登记）
+  T-EVENT-01:
+    name: 事件研究断点前后窗口图
+    status: v0.2候选（M05登记）
+  T-TCO-01:
+    name: 成本构成瀑布/堆叠图
+    status: v0.2候选（M06登记）
+  T-RESIDUAL-01:
+    name: 车龄-保值率衰减曲线
+    status: v0.2候选（M09登记）
+  T-COBWEB-01:
+    name: 价格-产量蛛网散点+相位标注
+    status: v0.2候选（S4登记）
+  T-RDD-01:
+    name: 断点设计专用双窗口图
+    status: v0.2候选（M08登记；批准前M08复用T-LINE-03 V1）

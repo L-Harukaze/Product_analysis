@@ -1,0 +1,10 @@
+# M05 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M05
+
+bindings:
+  - source_table: [events, windows]
+    template: 表格输出（v0.1）
+    variant_rule: T-EVENT-01（事件研究断点前后窗口图）为 v0.2 候选模板，未批准前不渲染图形；SUPPLY_CAPPED 触发时仅定性登记表格
+    required: false
+
+adaptation_log_required: true

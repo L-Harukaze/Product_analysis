@@ -1,0 +1,65 @@
+# M07 输出schema
+method: M07
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [ECO_DATA_MISSING]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    eco_components:
+      fields:
+        component: {type: string}
+        function: {type: string}
+        official_evidence: {type: string, note: 原文引句}
+    switching_costs:
+      fields:
+        type: {enum: [学习成本, 数据迁移, 生态权益损失]}
+        description: {type: string}
+        evidence_level: {enum: [证实, 推断], note: 无数据时全部标推断}
+    lock_strength:
+      fields:
+        grade: {enum: [强, 中, 弱, 不可判]}
+        basis: {type: string}
+        evidence_level: {enum: [证实, 推断], note: C1自选择排除声明强制}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引转换成本/生态锁定/自选择偏差三支柱}
+      L3_quantification: {type: string, required: true, note: ECO_DATA_MISSING时标"未量化+原因"，禁货币化}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C3逐条；自选择排除声明强制}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string, note: 跨设备持有率/使用率/复购率为预期登记项}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M04（生态叙事→非价格锚）/M03-ext（生态权益→隐性价格）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

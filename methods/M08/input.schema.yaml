@@ -1,0 +1,40 @@
+# M08 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M08
+version: v0.1
+
+tables:
+  K_policy_timeline:
+    desc: 政策时间线（本方法主表，新采集）——公告原文强制，官方级
+    consumed_by: [STEP1, STEP5]
+    fields:
+      date: {type: date, required: true}
+      policy: {type: string, required: true, note: 政策名}
+      provision: {type: string, required: true, note: 条款原文引句〔S12〕}
+      marker: {type: string, required: false, note: 价格门槛线（如30万/辆）；无则触发MISSING_MARKER}
+      stage: {enum: [公告, 执行], required: true, note: C3：两时点分离检验}
+
+  M_market_volume:
+    desc: 市场月度销量（EDB/乘联会，大盘对照用）
+    consumed_by: [STEP2, STEP3]
+    fields:
+      period: {type: string, required: true, note: 月度}
+      segment: {type: string, required: true, note: 细分口径（如新能源乘用车）}
+      volume: {type: number, required: true, unit: 辆}
+      caliber: {type: string, required: true}
+
+  G_sales_structure:
+    desc: 本品分月销量（GAP-02）
+    consumed_by: [STEP3]
+    fields:
+      period: {type: string, required: true}
+      metric: {type: string, required: true}
+      value: {type: number, required: true, unit: 辆}
+      caliber: {type: string, required: true}
+
+  A_config:
+    desc: 版本价格（STEP4政策线贴线检查）
+    consumed_by: [STEP4]
+    fields:
+      version: {type: string, required: true}
+      price_official: {type: number, required: true, unit: 万元}

@@ -1,0 +1,18 @@
+# M01 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M01
+
+bindings:
+  - source_table: [share, concentration]
+    template: T-SHARE-01
+    variant_rule: |
+      两期窗口（上市前基期/上市后）→ V1；
+      多期轨迹（月度可得）→ V2；
+      触发 SHARE_MISSING → V0 仅表格
+    required: true
+
+  - source_table: bands
+    template: 表格输出（v0.1）
+    variant_rule: T-BAND-01 为 v0.2 候选模板，未批准前不渲染图形
+    required: false
+
+adaptation_log_required: true

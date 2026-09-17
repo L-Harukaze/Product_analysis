@@ -1,0 +1,10 @@
+# S4 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: S4
+
+bindings:
+  - source_table: [series, phase_judgment]
+    template: 表格输出（v0.1）
+    variant_rule: T-COBWEB-01（价格-产量蛛网散点+相位标注）为 v0.2 候选模板，未批准前不渲染图形
+    required: false
+
+adaptation_log_required: true

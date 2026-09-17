@@ -1,0 +1,76 @@
+# M08 输出schema
+method: M08
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [POLICY_WINDOW_CONFOUNDED, MISSING_MARKER, EVENT_WINDOW_MISSING]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    policy_timeline:
+      fields:
+        date: {type: date}
+        policy: {type: string}
+        provision: {type: string, note: 条款原文引句}
+        marker: {type: string, required: false}
+        stage: {enum: [公告, 执行]}
+    market_break:
+      fields:
+        break_date: {type: date}
+        before_volume: {type: string}
+        after_volume: {type: string}
+        delta: {type: string, note: 跳变量}
+        reused_evidence: {type: string, required: false, note: EDB互证复用时注原始来源}
+    own_break:
+      fields:
+        break_date: {type: date}
+        own_delta: {type: string}
+        market_delta: {type: string, note: C2：必须大盘对照}
+        relative_jump: {type: string, note: 相对跳变=政策效应}
+    pricing_line_check:
+      fields:
+        marker: {type: string, note: 门槛线}
+        own_price: {type: string, note: 本品最近档位价}
+        distance_pct: {type: string, note: 差距%：<2%=贴线嫌疑}
+        novelty_candidate: {type: boolean, note: 政策诱导定价顶棚}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引断点设计/pull-forward/政策线定价三支柱}
+      L3_quantification: {type: string, required: true}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C3逐条}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M05（政策断点与竞品事件区分）/M03（贴线定价与档位结构）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

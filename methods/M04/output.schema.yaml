@@ -1,0 +1,86 @@
+# M04 输出schema（每轮prompt必须自携本文件相关部分，禁悬空引用〔S17〕）
+method: M04
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [E_MISSING, REF_PRICE_TIME_MISSING, B_MISSING, B_PARTIAL_NEWS, C_TIMELINE_PARTIAL, C4_NO_SALES_DATA]}, note: 只允许枚举值，禁自拟〔S4〕}
+
+  intermediate_tables:
+    anchors:
+      fields:
+        anchor_id: {type: string, note: 拆分行编号a/b}
+        date: {type: date}
+        tier: {type: string, required: false}
+        quote_original: {type: string, note: 原文引句}
+        claimed_reference: {type: string}
+        anchor_type: {enum: [A, B, C], note: A竞品锚/B自有锚/C非价格锚；C类不进offset算术}
+        implied_ref_price: {type: string, note: 含口径注记}
+    ref_prices:
+      fields:
+        anchor_id: {type: string}
+        ref_object: {type: string}
+        ref_price: {type: string, note: 点值或区间}
+        ref_price_interval: {type: string, required: false}
+        event_date: {type: date, note: 强制〔时点锚定条款〕}
+        source: {type: url}
+    offsets:
+      fields:
+        anchor_id: {type: string}
+        offset: {type: string, note: 本产品价−参照价；区间时给offset_interval}
+        offset_interval: {type: string, required: false}
+        price_basis: {type: string, note: 官方价/有效价，双口径同列不平均}
+        confidence: {enum: [官方, 第三方, 估算]}
+    effectiveness:
+      fields:
+        check_type: {type: string, note: 锚序结构/结构交叉验证/诱饵混淆/非单调}
+        finding: {type: string}
+        level: {type: string, note: 结构交叉验证强制标"相关级判断"}
+    timeline:
+      fields:
+        date: {type: date}
+        scope: {type: string}
+        action_type: {type: string}
+        value: {type: string}
+        note: {type: string, required: false}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引三条理论支柱之一（机制回锚）}
+      L3_quantification: {type: string, required: true, note: 缺数据标"未量化+原因"}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C4逐条}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array, note: 反推类必附，含全部被固定变量〔S11〕}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 过注册表编号校验；典型：M03（诱饵混淆）/S2-signal（信号功能）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

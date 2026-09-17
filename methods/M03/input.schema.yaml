@@ -1,0 +1,79 @@
+# M03 输入表定义（采集prompt生成器读取本文件）
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M03
+version: v1.0
+
+tables:
+  A_config:
+    desc: 配置事实表——只含配置事实，禁止混入成本估算数据〔S19〕
+    consumed_by: [STEP1, STEP4]
+    fields:
+      version: {type: string, required: true, note: 档位名}
+      price_official: {type: number, required: true, unit: 万元}
+      config_vector: {type: object, required: true, note: 关键配置项键值对，仅事实}
+    row_example: {version: "标准版", price_official: 21.59, config_vector: {续航CLTC_km: 700, 平台电压V: 486}}
+
+  B_events:
+    desc: 权益事件表（新闻级，一等公民形态）
+    consumed_by: [STEP5]
+    fields:
+      date: {type: date, required: true}
+      event: {type: string, required: true, note: 事件描述}
+      magnitude: {type: string, required: true, note: 量级/区间，媒体口径}
+      scope: {type: string, required: false, note: 涉及档位，缺省=全档}
+
+  B_detail:
+    desc: 权益明细表（增强层，逐项明细+可核验折算；有则精确折算）
+    consumed_by: [STEP5]
+    fields:
+      date: {type: date, required: true}
+      item: {type: string, required: true, note: 权益项名}
+      value_equivalent: {type: number, required: true, unit: 万元, note: 可核验折算值}
+      scope: {type: string, required: false}
+
+  C_price_events:
+    desc: 价格事件表（本品+竞品，scope区分）
+    consumed_by: [STEP3, STEP6]
+    fields:
+      date: {type: date, required: true}
+      object: {type: string, required: true, note: 对象（档位/竞品车型）}
+      price: {type: number, required: true, unit: 万元}
+      scope: {enum: [own, competitor_ref], required: true}
+      event_type: {type: string, required: false, note: 上市/调价/权益变动等}
+
+  D_cost_params:
+    desc: 成本参数池——须含锚定时点标注，电池单价给全年区间
+    consumed_by: [STEP2]
+    fields:
+      param: {type: string, required: true, note: 参数名（如电池单价_元每kWh）}
+      value_range: {type: string, required: true, note: 值或区间}
+      anchor_position: {type: string, required: true, note: 锚定时点（上市日）在参数序列中的位置说明}
+      basis: {type: string, required: false, note: 取值理由}
+
+  E_anchor_quotes:
+    desc: 锚定话语表——官方/发布会/高管话语，原文引句强制
+    consumed_by: [STEP3]
+    fields:
+      date: {type: date, required: true}
+      tier: {type: string, required: false, note: 涉及档位}
+      quote_original: {type: string, required: true, note: 原文引句，不得改写}
+      claimed_reference: {type: string, required: false, note: 话语指向的参照对象，无外部参照=非价格锚定}
+
+  F_competitor_ref:
+    desc: 竞品参照价表——时点注记强制
+    consumed_by: [STEP3, STEP6]
+    fields:
+      object: {type: string, required: true, note: 参照对象（含具体款型）}
+      price: {type: string, required: true, unit: 万元, note: 点值或区间（区间须注记）}
+      event_date: {type: date, required: true, note: 该价格的事件日期}
+      time_note: {type: string, required: false, note: '时点近似注记（如"降价后价，真实价∈[x,y)"）'}
+
+  G_sales_structure:
+    desc: 销量与结构证据表——官方数据带原文引句〔S12〕
+    consumed_by: [STEP4c, STEP6]
+    fields:
+      period: {type: string, required: true, note: 时点或期间}
+      metric: {type: string, required: true, note: 指标名（交付量/锁单结构/ASP等）}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true, note: 口径（中国/全球、交付/锁单/上险）}
+      quote_original: {type: string, required: false, note: 官方类必带原文引句}

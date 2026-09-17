@@ -1,0 +1,65 @@
+# M09 输出schema
+method: M09
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [RESIDUAL_DATA_MISSING]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    residual_quotes:
+      fields:
+        object: {type: string}
+        age_months: {type: integer}
+        mileage: {type: number, required: false}
+        asking_price: {type: number, unit: 万元}
+        msrp: {type: number, unit: 万元}
+        retention_rate: {type: string, note: asking/msrp}
+        price_type: {enum: [挂牌, 成交]}
+    retention_curve:
+      fields:
+        age_band: {type: string, note: 车龄段}
+        retention_band: {type: string, note: 区间输出禁单值；<3时点不成线仅点状登记}
+        n_samples: {type: integer, note: 样本量声明}
+        benchmark_ref: {type: string, required: false, note: 行业基准对照（降级形态主输出）}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引残值曲线/衰减结构/样本偏差三支柱}
+      L3_quantification: {type: string, required: true, note: 降级形态标"未量化+数据缺失原因"}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C3逐条}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string, note: 本品二手报价序列为预期登记项}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M06（残值组件输出，双向联动）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

@@ -1,0 +1,41 @@
+# M05 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M05
+version: v0.1
+
+tables:
+  G_sales_structure:
+    desc: 分时点销量序列（本方法主表，GAP-02）——粒度决定窗口长度
+    consumed_by: [STEP2, STEP3, STEP5]
+    fields:
+      period: {type: string, required: true, note: 周度/月度}
+      metric: {type: string, required: true, note: 交付量/锁单量}
+      value: {type: number, required: true, unit: 辆}
+      caliber: {type: string, required: true, note: 交付/锁单/上险；中国/全球}
+
+  G_supply_evidence:
+    desc: 供给约束证据（C4判定用，表G子类）——提车周期/订单积压
+    consumed_by: [STEP3]
+    fields:
+      period: {type: string, required: true}
+      metric: {type: string, required: true, note: 提车周期_周/在手订单}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true, note: 分档位注明（判例：Max版29-32周为专属周期）}
+
+  C_price_events:
+    desc: 竞品调价事件（断点锚点）
+    consumed_by: [STEP1, STEP5]
+    fields:
+      date: {type: date, required: true}
+      object: {type: string, required: true, note: 竞品车型}
+      price: {type: number, required: true, unit: 万元}
+      scope: {const: competitor_ref, required: true}
+      event_type: {type: string, required: true, note: 涨价/降价+幅度}
+
+  B_events:
+    desc: 本品权益事件（C1同窗检查）
+    consumed_by: [STEP4]
+    fields:
+      date: {type: date, required: true}
+      event: {type: string, required: true}
+      magnitude: {type: string, required: true}

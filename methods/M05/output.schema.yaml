@@ -1,0 +1,70 @@
+# M05 输出schema
+method: M05
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [SUPPLY_CAPPED, EVENT_WINDOW_MISSING, CONFOUNDED_WINDOW, C4_NO_SALES_DATA]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    events:
+      fields:
+        event_date: {type: date}
+        competitor: {type: string}
+        action: {enum: [涨价, 降价]}
+        magnitude: {type: string}
+    windows:
+      fields:
+        event_date: {type: date}
+        window_len: {type: string, note: 窗口长度声明}
+        own_sales_before: {type: string}
+        own_sales_after: {type: string}
+        supply_status: {enum: [capped, observable, unknown], note: STEP3判定}
+        confounded: {type: boolean, note: C1/C2同窗标记}
+    elasticity_estimates:
+      fields:
+        event_date: {type: date}
+        epsilon_interval: {type: string, note: 区间输出；SUPPLY_CAPPED窗口不填}
+        window_sensitivity: {type: string, note: 窗口长度变动结论是否翻转}
+        observable: {type: boolean}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引交叉弹性/事件研究/供给截断}
+      L3_quantification: {type: string, required: true, note: SUPPLY_CAPPED时标"未量化+供给截断原因"}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C4逐条；C4判定结论强制}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M01（结构背景）/M08（政策断点区分）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

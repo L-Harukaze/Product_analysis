@@ -1,0 +1,380 @@
+/* Token 试色页 v2 专用样式（施工后本页可整体移除；零裸色值，一律 var() + color-mix 派生） */
+
+.ts-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-5) var(--space-7);
+}
+
+/* ———— 顶部品牌导航（仿参考图 1：两侧结构小字）———— */
+.ts-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.ts-nav-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ts-mark {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  position: relative;
+}
+
+.ts-mark::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: var(--primary);
+  border-radius: 1px;
+  opacity: 0.8;
+}
+
+.ts-nav-brand {
+  font-size: var(--font-h3);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ts-nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ts-nav-link {
+  font-size: var(--font-caption);
+  color: var(--text-sub);
+  cursor: default;
+}
+
+.ts-nav-link:hover {
+  color: var(--text-main);
+}
+
+.ts-nav-active {
+  color: var(--warning);
+}
+
+.ts-nav-sep {
+  color: var(--text-faint);
+}
+
+.ts-intro {
+  margin-bottom: var(--space-5);
+}
+
+.ts-intro p {
+  color: var(--text-sub);
+  font-size: var(--font-caption);
+  margin: var(--space-2) 0 0;
+}
+
+.ts-review {
+  color: var(--warning-text);
+  font-size: var(--font-caption);
+}
+
+.ts-dim {
+  color: var(--text-sub);
+  font-size: var(--font-caption);
+}
+
+/* ———— section 容器 ———— */
+.ts-section {
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+
+/* 质感演示节：外层只留标题带，内部放真实质感卡，避免卡中卡 */
+.ts-section-flush {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0 0 var(--space-2);
+}
+
+.ts-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ts-section-head h2 {
+  font-size: var(--font-h2);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-main);
+}
+
+/* ———— 0 hero 样张 ———— */
+.ts-hero {
+  border: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+.ts-hero-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.ts-hero-body {
+  text-align: center;
+  padding: var(--space-7) var(--space-5) var(--space-6);
+}
+
+.ts-hero-kicker {
+  margin-bottom: var(--space-4);
+}
+
+.ts-hero-title {
+  font-size: var(--font-display);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  color: var(--hero-fg);
+  margin: 0 0 var(--space-3);
+}
+
+.ts-hero-sub {
+  font-size: var(--font-body);
+  color: var(--text-sub);
+  max-width: 620px;
+  margin: 0 auto var(--space-5);
+}
+
+.ts-hero-search {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.ts-hero-search input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text-main);
+  padding: 0 var(--space-4);
+  font-size: var(--font-body);
+  outline: none;
+}
+
+.ts-hero-search input::placeholder {
+  color: var(--text-faint);
+}
+
+.ts-hero-meta {
+  display: flex;
+  justify-content: space-between;
+  padding-top: var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ———— 1 徽标 ———— */
+.ts-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.ts-tag-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ———— 2 质感卡片 ———— */
+.ts-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.ts-spec-card {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ts-spec-title {
+  font-size: var(--font-h2);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ts-spec-body {
+  font-size: var(--font-caption);
+  color: var(--text-sub);
+  margin: 0;
+  flex: 1;
+}
+
+.ts-spec-inset {
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  color: var(--text-sub);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ———— 3 按钮 / 4 Alert ———— */
+.ts-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ts-mt {
+  margin-top: var(--space-4);
+}
+
+.ts-alert {
+  margin-bottom: var(--space-3);
+}
+
+.ts-alert:last-child {
+  margin-bottom: 0;
+}
+
+/* ———— 5 文字层级 ———— */
+.ts-type-scale {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ts-type {
+  color: var(--text-main);
+}
+
+/* ———— 6 图表 ———— */
+.ts-chart-colors {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ts-chart-color {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ts-chart-bar {
+  width: 64px;
+  height: var(--space-5);
+  border-radius: var(--radius);
+}
+
+.ts-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--space-4);
+}
+
+/* ———— 7 间距 ———— */
+.ts-spaces {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.ts-space {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ts-space-block {
+  height: var(--space-5);
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* ———— 8 表格 failed 行淡底（color-mix 派生） ———— */
+.ts-section .ant-table-tbody tr.ts-row-failed > td {
+  background: color-mix(in srgb, var(--danger) 10%, transparent) !important;
+}
+
+/* ———— 9 代码块（cc-inset 凹槽） ———— */
+.ts-codeblock {
+  position: relative;
+  overflow: auto;
+}
+
+.ts-codeblock pre {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--text-sub);
+  font-family: var(--font-mono);
+  font-size: var(--font-caption);
+  line-height: 1.7;
+}
+
+.ts-copy {
+  position: sticky;
+  float: right;
+  top: var(--space-2);
+  right: var(--space-2);
+  margin: var(--space-2) var(--space-2) 0 0;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text-sub);
+  font-size: var(--font-caption);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+}
+
+.ts-copy:hover {
+  color: var(--text-main);
+}
+
+.ts-footer {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: var(--font-caption);
+}
+
+.ts-footer code {
+  font-family: var(--font-mono);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-radius: 4px;
+  padding: 0 var(--space-1);
+}

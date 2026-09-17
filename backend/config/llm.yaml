@@ -1,0 +1,21 @@
+# LLM 三角色配置（ARCHITECTURE 5.1 定稿，2026-09-13 Owner 裁决）
+roles:
+  executor:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen3.8-max
+    api_key_env: LLM_EXECUTOR_KEY
+    max_concurrency: 8
+    timeout_s: null            # null = 方法包声明优先（P-2），调用层不设全局值
+  arbiter:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen3.8-max
+    api_key_env: LLM_ARBITER_KEY
+    max_concurrency: 1
+    timeout_s: 60              # P-5 原 15s；2026-09-16 实测 qwen3.8-max 为推理模型（含 reasoning_content），
+                               # 批量仲裁 JSON 超 15s 必超时降级，放宽至 60s（连通性探针 2.1s 正常）
+  qc:
+    base_url: https://api.deepseek.com
+    model: deepseek-flash
+    api_key_env: LLM_QC_KEY
+    max_concurrency: 4
+    timeout_s: 60

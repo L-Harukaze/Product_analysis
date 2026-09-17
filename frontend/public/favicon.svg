@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 同款复刻 P0 首页 .mark：漆黑底 + 挼蓝描边圆角框 + 中心实心块（app.css .mark/.mark::after） -->
+  <rect width="32" height="32" rx="7" fill="#161823"/>
+  <rect x="3" y="3" width="26" height="26" rx="5.5" fill="none" stroke="#6E9BC5" stroke-width="2"/>
+  <rect x="10.5" y="10.5" width="11" height="11" rx="1.5" fill="#6E9BC5" opacity="0.8"/>
+</svg>

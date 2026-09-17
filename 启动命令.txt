@@ -1,0 +1,7 @@
+# 终端 1 —— 后端（FastAPI :8000）
+cd e:\Quan_Zhan\产品分析Agent\backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# 终端 2 —— 前端（Vite :5173）
+cd e:\Quan_Zhan\产品分析Agent\frontend
+npm run dev

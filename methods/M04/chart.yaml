@@ -1,0 +1,30 @@
+# M04 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M04
+
+bindings:
+  - source_table: [anchors, offsets]
+    template: T-ANCHOR-01
+    variant_rule: |
+      参照价全点估 → V1 哑铃；
+      参照价带区间注记 → V0 区间条；
+      锚≥4且有时序 → V2 时序形态；
+      spec：锚时点跨度<1个月（同日簇发）不选V2
+    required: true
+
+  - source_table: timeline
+    template: T-LINE-03
+    variant_rule: |
+      B_detail → V2 双带；
+      B_PARTIAL_NEWS → V2e 事件带（禁插值）；
+      B_MISSING → V1 单带；
+      触发 C_TIMELINE_PARTIAL → 空窗段断点标注
+    required: true
+
+  - source_table: effectiveness
+    template: T-SHARE-01
+    variant_rule: |
+      结构对比数据可得：两期→V1，多期→V2；
+      触发 C4_NO_SALES_DATA → V0 仅表格
+    required: false
+
+adaptation_log_required: true

@@ -1,0 +1,39 @@
+# M06 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M06
+version: v0.1
+
+tables:
+  A_config:
+    desc: 版本价格+官方能耗数据
+    consumed_by: [STEP2, STEP3]
+    fields:
+      version: {type: string, required: true}
+      price_official: {type: number, required: true, unit: 万元}
+      energy_consumption: {type: string, required: false, note: 官方电耗/油耗，含测试口径}
+
+  B_events:
+    desc: 权益事件（购置成本并轨）
+    consumed_by: [STEP3]
+    fields:
+      date: {type: date, required: true}
+      event: {type: string, required: true}
+      magnitude: {type: string, required: true}
+
+  D_cost_params:
+    desc: 使用成本参数（新采集）——保养/保险/能源价格
+    consumed_by: [STEP2]
+    fields:
+      param: {type: string, required: true, note: 保养周期费用/保险基准/电价}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true, note: 基准城市/时段口径}
+      period: {type: string, required: false}
+
+  I_residual:
+    desc: 残值数据（M09输出或行业基准）——缺失触发RESIDUAL_MISSING
+    consumed_by: [STEP2]
+    required: false
+    fields:
+      age_months: {type: integer, required: true, note: 车龄}
+      retention_rate: {type: string, required: true, note: 保值率%}
+      basis: {type: string, required: true, note: 实测/行业基准}

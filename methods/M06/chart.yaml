@@ -1,0 +1,10 @@
+# M06 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M06
+
+bindings:
+  - source_table: [components, tco_comparison]
+    template: 表格输出（v0.1）
+    variant_rule: T-TCO-01（成本构成瀑布/堆叠）为 v0.2 候选模板，未批准前不渲染图形；COMPONENT_MISSING 时缺失组件在表格中显式标注
+    required: false
+
+adaptation_log_required: true

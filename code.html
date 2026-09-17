@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>前端线框草图 · 产品经济学诊断 Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei",sans-serif; background:#ececea; color:#333; padding:32px 16px; font-size:12px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+
+  h1 { font-size:20px; margin-bottom:4px; }
+  .sub { color:#777; margin-bottom:20px; }
+  h2 { font-size:15px; margin:36px 0 10px; }
+
+  /* 图例 */
+  .legend { background:#fff; border:1px solid #ddd; border-radius:8px; padding:12px 16px; display:flex; gap:24px; flex-wrap:wrap; margin-bottom:8px; }
+  .legend b { font-weight:600; }
+
+  .api { display:inline-block; background:#2563eb; color:#fff; border-radius:3px; padding:1px 6px; font-size:10px; font-family:Menlo,Consolas,monospace; vertical-align:middle; white-space:nowrap; }
+  .fld { display:inline-block; background:#dbeafe; color:#1e40af; border-radius:3px; padding:1px 6px; font-size:10px; font-family:Menlo,Consolas,monospace; vertical-align:middle; white-space:nowrap; }
+  .note { color:#c2410c; font-size:11px; }
+  .hl { color:#9333ea; font-weight:600; }
+
+  /* 流程地图 */
+  .flow { background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fnode { border:2px solid #555; border-radius:6px; padding:8px 12px; background:#fafafa; min-width:150px; }
+  .fnode b { display:block; font-size:13px; }
+  .fnode span { color:#777; font-size:11px; }
+  .fnode.bp { border-color:#c2410c; background:#fff7ed; }
+  .farrow { font-size:18px; color:#999; }
+  .floop { width:100%; color:#c2410c; font-size:11px; margin-top:8px; }
+
+  /* Frame 外壳(Figma 风格) */
+  .frame { background:#fff; border:1px solid #d4d4d4; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:40px; overflow:hidden; }
+  .fhead { background:#f5f5f4; border-bottom:1px solid #e5e5e5; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; }
+  .fhead b { font-size:13px; }
+  .fhead span { color:#888; font-family:Menlo,monospace; font-size:11px; }
+
+  .screen { padding:0; }
+  /* 顶部导航 */
+  .nav { height:44px; border-bottom:1px solid #e5e5e5; display:flex; align-items:center; padding:0 20px; gap:16px; }
+  .logo { font-weight:700; font-size:13px; }
+  .nav .right { margin-left:auto; display:flex; gap:10px; align-items:center; }
+  .btn { display:inline-block; border:1px solid #999; border-radius:5px; padding:4px 12px; font-size:12px; background:#fff; }
+  .btn.pri { background:#2563eb; border-color:#2563eb; color:#fff; }
+  .btn.sm { padding:2px 8px; font-size:11px; }
+
+  /* 步骤指示器 */
+  .steps { display:flex; align-items:center; gap:6px; padding:10px 20px; border-bottom:1px solid #eee; background:#fafafa; }
+  .stp { display:flex; align-items:center; gap:5px; font-size:11px; color:#666; }
+  .dot { width:16px; height:16px; border-radius:50%; border:1.5px solid #bbb; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#999; }
+  .dot.on { border-color:#2563eb; color:#2563eb; }
+  .dot.done { background:#16a34a; border-color:#16a34a; color:#fff; }
+  .dot.cur { background:#2563eb; border-color:#2563eb; color:#fff; }
+  .sln { width:28px; height:1.5px; background:#ddd; }
+
+  .body { display:flex; min-height:520px; }
+  .col { padding:16px 20px; }
+  .col.L { flex:0 0 58%; border-right:1px solid #eee; }
+  .col.R { flex:1 1 auto; }
+  .col.full { flex:1; }
+
+  .sec-t { font-size:12px; font-weight:700; margin:14px 0 8px; color:#444; }
+  .sec-t:first-child { margin-top:0; }
+
+  /* 组件模拟 */
+  .card { border:1px solid #ddd; border-radius:6px; padding:10px 12px; margin-bottom:10px; background:#fff; }
+  .card.err { border-color:#fca5a5; background:#fef2f2; }
+  .card.warn { border-color:#fcd34d; background:#fffbeb; }
+  .card.ghost { border-style:dashed; background:#fafafa; color:#999; }
+
+  .badge { display:inline-block; border-radius:10px; padding:1px 8px; font-size:10px; font-weight:600; }
+  .b-gray { background:#eee; color:#666; }
+  .b-blue { background:#dbeafe; color:#1d4ed8; }
+  .b-green { background:#dcfce7; color:#15803d; }
+  .b-red { background:#fee2e2; color:#b91c1c; }
+  .b-amber { background:#fef3c7; color:#a16207; }
+  .b-purple { background:#f3e8ff; color:#7e22ce; }
+
+  table.t { width:100%; border-collapse:collapse; font-size:11px; }
+  table.t th { text-align:left; color:#888; font-weight:600; border-bottom:1px solid #e5e5e5; padding:4px 6px; }
+  table.t td { border-bottom:1px solid #f0f0f0; padding:5px 6px; }
+  tr.fail td { color:#b91c1c; background:#fff5f5; }
+
+  .fpcards { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .fpcard { border:1px solid #ddd; border-radius:6px; padding:8px; font-size:11px; }
+  .fpcard b { display:block; font-size:11px; }
+  .fpcard .v { font-size:13px; font-weight:700; margin:2px 0; }
+  .tag { display:inline-block; border:1px solid #ccc; border-radius:3px; font-size:9px; padding:0 4px; color:#777; }
+
+  .code { background:#1e293b; color:#cbd5e1; border-radius:6px; padding:10px 12px; font-family:Menlo,Consolas,monospace; font-size:10px; line-height:1.7; white-space:pre; overflow:hidden; position:relative; }
+  .copybtn { position:absolute; top:8px; right:8px; background:#334155; color:#fff; border:none; border-radius:4px; padding:3px 10px; font-size:10px; }
+
+  .input { border:1px solid #ccc; border-radius:5px; padding:7px 10px; font-size:11px; color:#aaa; background:#fff; }
+  .textarea { border:1px dashed #bbb; border-radius:6px; padding:14px; color:#aaa; font-size:11px; min-height:70px; background:#fcfcfc; }
+
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .mcard { border:1px solid #ddd; border-radius:6px; padding:10px; font-size:11px; }
+  .mcard b { display:block; margin-bottom:4px; }
+  .mcard.run { border-color:#93c5fd; background:#eff6ff; }
+  .mcard.fail { border-color:#fca5a5; background:#fef2f2; }
+
+  .chartbox { border:1px dashed #bbb; border-radius:6px; height:90px; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:11px; background:#fafafa; margin:8px 0; }
+
+  .di4 { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+  .di4 .cell { border:1px solid #eee; border-radius:4px; padding:5px 7px; font-size:10.5px; background:#fcfcfc; }
+  .di4 .cell b { color:#555; }
+
+  .annos { padding:12px 20px; background:#fafaf9; border-top:1px dashed #ddd; font-size:11px; line-height:1.9; }
+  .annos .k { display:inline-block; min-width:20px; }
+
+  .footer { text-align:center; color:#999; margin-top:30px; font-size:11px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>前端线框草图 · 产品经济学诊断 Agent</h1>
+  <div class="sub">静态示意稿(无交互) · 实际设计画布 1440px 宽 · 布局与区块位置按此为基线修改</div>
+
+  <div class="legend">
+    <span><span class="api">API</span> = 绑定的后端端点</span>
+    <span><span class="fld">field</span> = 消费的响应字段(13章契约)</span>
+    <span class="note">橙色字 = 设计要点 / 布局理由</span>
+    <span><span class="hl">★</span> = 演示亮点位(PRD 2.3)</span>
+  </div>
+
+  <!-- ═══════════ 流程地图 ═══════════ -->
+  <h2>0. 页面地图(状态机 → 页面映射)</h2>
+  <div class="flow">
+    <div class="fnode"><b>P1 诊断列表</b><span>合并新建入口<br>— / <span class="fld">GET·POST /diagnoses</span></span></div>
+    <div class="farrow">→</div>
+    <div class="fnode bp"><b>P2 路由+数据工作台</b><span>routed · 人肉断点1<br><span class="fld">/{id} · /collection-prompt · /data</span></span></div>
+    <div class="farrow">→</div>
+    <div class="fnode bp"><b>P2』ready 停留</b><span>人肉断点2 · 核对档案<br>Owner 手动触发执行</span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><b>P3 执行进度</b><span>executing · 唯一轮询页 2s<br><span class="fld">GET /{id} · /conflicts/{cid}/verdict</span></span></div>
+    <div class="farrow">→</div>
+    <div class="fnode"><b>P4 报告+评测</b><span>done<br><span class="fld">/report · /claims · /evaluation</span></span></div>
+    <div class="floop">↺ 循环回路:P2 数据打回(不迁状态,循环 n 次) · P3 L2 冲突裁决(修数→回 P2 再提交) · failed_at(stage)→重放该阶段端点(3.4) —— 三个回路都必须在 UI 上有"可见入口"</div>
+  </div>
+
+  <!-- ═══════════ Frame 1 ═══════════ -->
+  <h2>Frame 1 · P0+P1 合并:诊断列表 + 新建入口</h2>
+  <div class="frame">
+    <div class="fhead"><b>诊断列表</b><span>1440 × auto · 守卫:无 · <span class="api">GET /api/diagnoses</span></span></div>
+    <div class="screen">
+      <div class="nav">
+        <span class="logo">产品经济学诊断 Agent</span>
+        <div class="right"><span class="note">新建做成右上角主按钮+Modal,不单独占一页</span><span class="btn pri">＋ 新建诊断</span></div>
+      </div>
+      <div class="body">
+        <div class="col full">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <span class="badge b-gray">全部 4</span><span class="badge b-gray">routed 1</span><span class="badge b-gray">ready 1</span><span class="badge b-blue">executing 1</span><span class="badge b-gray">done 1</span><span class="badge b-red">failed 1</span>
+            <span class="note" style="margin-left:auto">状态 Tabs 即状态机枚举(3.2),failed 必须可筛——T6</span>
+          </div>
+          <table class="t">
+            <tr><th>产品</th><th>品类</th><th>状态</th><th>阶段提示</th><th>更新</th><th>操作</th></tr>
+            <tr><td><b>红米 K80</b></td><td>手机</td><td><span class="badge b-blue">● executing</span></td><td>M03 · R2/3 执行中</td><td>2 分钟前</td><td><span class="btn sm">查看 →</span></td></tr>
+            <tr><td><b>小米 SU7</b></td><td>汽车</td><td><span class="badge b-green">● done</span></td><td>报告已生成</td><td>3 天前</td><td><span class="btn sm">报告 →</span></td></tr>
+            <tr><td><b>三只松鼠</b></td><td>零食</td><td><span class="badge b-amber">● ready</span></td><td>档案齐 · 待触发执行</td><td>1 小时前</td><td><span class="btn sm">进入 →</span></td></tr>
+            <tr class="fail"><td>iPhone 17</td><td>手机</td><td><span class="badge b-red">✕ failed(routing)</span></td><td>仲裁超时 · 待补裁决 2 项</td><td>昨天</td><td><span class="btn sm">重试 reroute</span> <span class="api">POST /{id}/reroute</span></td></tr>
+          </table>
+          <div class="note" style="margin-top:8px">失败行红色 + 重试按钮直接摆在列表:任何失败状态在任意页面都可看见、可操作(T6 显式失败)。</div>
+
+          <div class="sec-t">新建诊断 Modal(点右上按钮弹出,叠层示意)</div>
+          <div class="card" style="max-width:440px">
+            <b>新建诊断</b> <span class="api">POST /api/diagnoses</span>
+            <div style="margin:8px 0">产品名 * <span class="input" style="width:220px">如:红米 K80</span></div>
+            <div style="margin:8px 0">品类提示 <span class="input" style="width:220px">手机(可选)</span></div>
+            <div style="margin:8px 0;color:#888">▸ 已知事实(折叠,可选)</div>
+            <div style="margin:4px 0 10px 16px">首发价 <span class="input" style="width:100px">1999</span> <span class="note">← 7.1 产品事实入口:填了 F1 走 L2 定量查表;不填自动退化 L3 带锚点仲裁,前端不强制</span></div>
+            <span class="btn">取消</span> <span class="btn pri">创建并路由</span>
+            <div class="note" style="margin-top:8px">提交后同步等事务 A(≤15s,含仲裁):返回指纹+激活矩阵+缺数清单 → 直接跳 P2。等待期显示"仲裁中…"(P-5:留痕即内容)。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="annos">
+      <b>布局要点</b>:单栏表格为主视觉;状态徽标列是"眼动锚点",一眼扫出卡在哪;操作列随状态变化(查看/进入/重试),由 <span class="fld">status</span> 字段驱动。
+    </div>
+  </div>
+
+  <!-- ═══════════ Frame 2 ═══════════ -->
+  <h2>Frame 2 · P2+P3 合并:路由结果 + 数据准备工作台(routed 长停留态)</h2>
+  <div class="frame">
+    <div class="fhead"><b>路由结果 / 数据工作台 · 红米 K80</b><span>1440 × auto · 守卫:routed · 人肉断点 1</span></div>
+    <div class="screen">
+      <div class="nav"><span class="logo">产品经济学诊断 Agent</span><div class="right"><span class="badge b-amber">routed</span><span class="btn sm">诊断列表</span></div></div>
+      <div class="steps">
+        <span class="stp"><span class="dot done">✓</span>路由</span><span class="sln"></span>
+        <span class="stp"><span class="dot cur">2</span><b>数据准备(你在这里)</b></span><span class="sln"></span>
+        <span class="stp"><span class="dot">3</span>执行</span><span class="sln"></span>
+        <span class="stp"><span class="dot">4</span>报告</span>
+      </div>
+      <div class="body">
+        <!-- 左栏 -->
+        <div class="col L">
+          <div style="margin-bottom:10px"><b style="font-size:15px">红米 K80</b> · 手机 <span class="fld">fingerprint F1-F6</span></div>
+
+          <div class="sec-t">指纹卡片 <span class="note">(六卡一排三列;来源标签=三级漏斗的UI化,7.1)</span></div>
+          <div class="fpcards">
+            <div class="fpcard"><b>F1 价格×频率</b><span class="v">中频中价</span><br><span class="tag">L2 定量·查表</span></div>
+            <div class="fpcard"><b>F2 信息属性</b><span class="v">搜索品</span><br><span class="tag">L1 规则</span></div>
+            <div class="fpcard" style="border-color:#d8b4fe;background:#faf5ff"><b>F3 差异化</b><span class="v">强</span><br><span class="tag">L3 仲裁</span> <span class="hl">★点开看{判定|理由|置信}</span></div>
+            <div class="fpcard" style="border-color:#d8b4fe;background:#faf5ff"><b>F4 生态</b><span class="v">强</span><br><span class="tag">L3 仲裁</span> <span class="hl">★</span></div>
+            <div class="fpcard"><b>F5 政策敏感</b><span class="v">低</span><br><span class="tag">L1 规则</span></div>
+            <div class="fpcard"><b>F6 供给形态</b><span class="v">实体</span><br><span class="tag">L1 规则</span></div>
+          </div>
+
+          <div class="sec-t">激活矩阵 <span class="fld">activation_matrix[] {domain,method,form,reason}</span></div>
+          <table class="t">
+            <tr><th>域</th><th>方法</th><th>形态</th><th>路由理由</th></tr>
+            <tr><td>D1 市场结构</td><td>M01</td><td>标准</td><td>默认激活</td></tr>
+            <tr><td>D2 定价机制</td><td>M03 版本阶梯</td><td>标准</td><td>F1 中价 → 阶梯敏感</td></tr>
+            <tr><td>D5 用户价值</td><td>M06 TCO + <b>M09?</b></td><td>叠加</td><td class="hl">★ F1×F4 边界仲裁留痕(预埋边界案例)</td></tr>
+            <tr><td>D7 周期相位</td><td>—</td><td><span class="badge b-gray">不适用</span></td><td>F3 强差异化 → S4 不触发(显式登记,不静默缺席)</td></tr>
+          </table>
+
+          <div class="sec-t">缺数清单 <span class="fld">missing_data[]</span> <span class="note">(checklist,随提交动态刷新)</span></div>
+          <div class="card">
+            <div>✅ 表A 销量序列 — 已入档 12 行</div>
+            <div>⬜ <b>表D 竞品价格带</b> — 缺 <span class="note">→ 引导去右栏提交</span></div>
+            <div>⬜ <b>表F 生态锁定量</b> — 缺</div>
+            <div class="note" style="margin-top:6px">清单清空 → 状态自动迁 ready,本页顶部亮出「触发执行」大按钮(断点 2 的动作)。<span class="api">POST /{id}/execute</span></div>
+          </div>
+        </div>
+
+        <!-- 右栏 -->
+        <div class="col R">
+          <div class="sec-t">采集 Prompt <span class="api">GET /{id}/collection-prompt</span></div>
+          <div class="code"><span class="copybtn">复制全文</span># 数据采集任务:红米 K80
+## 一、需要的表(共 2 张,仅缺失部分)
+### 表 D:竞品价格带
+| 字段 | 类型 | 口径 | 置信要求 |
+...
+## 二、硬规则(无来源不入档)...
+## 三、输出格式(JSON 示例)...
+## 四、打回条款:第3次提交 2 行错误,待修正…
+<span class="note" style="color:#94a3b8">↑ 打回后取最新版自动携带拒绝原因(6.1),Owner 整段转给豆包即可</span></div>
+
+          <div class="sec-t">提交豆包返回 <span class="api">POST /{id}/data</span> <span class="note">(循环 n 次,历史全留痕)</span></div>
+          <div class="textarea">粘贴豆包返回的 JSON 原文…</div>
+          <div style="margin:8px 0"><span class="btn pri">提交校验</span> <span class="note">L1 校验毫秒级同步返回</span></div>
+
+          <div class="sec-t">提交历史</div>
+          <div class="card err">
+            <b>#3 ✕ 打回</b> · 2 分钟前 <span class="fld">errors[{table,row_index,field,error}]</span>
+            <table class="t" style="margin-top:6px">
+              <tr><th>表</th><th>行</th><th>字段</th><th>错误</th></tr>
+              <tr class="fail"><td>D</td><td>2</td><td>market_share</td><td>类型错误:期望 number,实为 "30%"</td></tr>
+              <tr class="fail"><td>D</td><td>5</td><td>source_url</td><td>必填缺失(无来源不入档)</td></tr>
+            </table>
+            <div class="note" style="margin-top:6px">错误定位表=打回条款的数据源,Owner 照表改豆包答案 → 重新粘贴。定做到"行/字段"级是本页核心体验。</div>
+          </div>
+          <div class="card"><b>#2 ✕ 打回</b> · 10 分钟前(3 处错误,已折叠)</div>
+          <div class="card" style="border-color:#86efac"><b>#1 ✅ 入档</b> · 12 行 · 表A</div>
+        </div>
+      </div>
+    </div>
+    <div class="annos">
+      <b>布局要点</b>:<b>左看右做</b>——左栏是"系统想清楚了什么"(指纹/矩阵/缺数,信任感),右栏是"你要干的活"(复制→粘贴→看打回,流水线)。两栏宽度约 58:42。ready 态后右栏顶部替换为「触发执行」主按钮。
+    </div>
+  </div>
+
+  <!-- ═══════════ Frame 3 ═══════════ -->
+  <h2>Frame 3 · P4:执行进度(executing,唯一轮询页)</h2>
+  <div class="frame">
+    <div class="fhead"><b>执行进度 · 红米 K80</b><span>1440 × auto · <span class="api">GET /{id}</span> 每 2s(P-4)</span></div>
+    <div class="screen">
+      <div class="nav"><span class="logo">产品经济学诊断 Agent</span><div class="right"><span class="badge b-blue">● executing</span><span class="btn sm">列表</span></div></div>
+      <div class="steps">
+        <span class="stp"><span class="dot done">✓</span>路由</span><span class="sln"></span>
+        <span class="stp"><span class="dot done">✓</span>数据准备</span><span class="sln"></span>
+        <span class="stp"><span class="dot cur">3</span><b>执行中</b></span><span class="sln"></span>
+        <span class="stp"><span class="dot">4</span>报告</span>
+      </div>
+      <div class="body"><div class="col full">
+
+        <div class="card warn">
+          <b>⚠ 1 条 L2 冲突待裁决(不裁决无法进入装配)</b> <span class="api">POST /{id}/conflicts/{cid}/verdict</span> <span class="fld">409 {conflicts[]}</span>
+          <div style="margin-top:6px">跨源碰撞 · 表B 份额 27%(第三方) vs 表C 29%(官方) · 涉及档案行 B2/C1
+          <span class="btn sm">修数 → 回数据页</span> <span class="btn sm">维持(落库注记)</span></div>
+          <div class="note" style="margin-top:6px">冲突卡置顶且黄色——它是"触发被拒"信号(11.3),不是系统故障,视觉上区别于红色失败。</div>
+        </div>
+
+        <div class="sec-t">总进度:方法 3/8 · 轮次 7/19 <span class="fld">progress{done_n,total_n}</span></div>
+        <div class="grid4">
+          <div class="mcard"><b>M01 市场结构</b><span class="badge b-green">done</span><br><span style="color:#999">3 轮 · 41s</span></div>
+          <div class="mcard run"><b>M03 版本阶梯</b><span class="badge b-blue">R2/3 执行中</span><br><span style="color:#999">本轮产出:ladder 表…</span><br><span class="fld">phase:"running(Rn)"</span></div>
+          <div class="mcard"><b>M06 TCO</b><span class="badge b-gray">pending</span></div>
+          <div class="mcard fail"><b>M02 学习曲线</b><span class="badge b-red">✕ failed</span><br><span style="font-size:10px">超时 600s ×2 · 已按声明切法拆轮重跑 1 次</span><br>
+            <span class="btn sm" style="margin-top:4px">查看错误详情 ▾</span>
+            <div class="note" style="margin-top:4px">展开=错误面板:{超时值|重试|拆轮记录|原始报错}(P-1/T6)。方法失败<b>不传染</b>,装配照常,报告显式登记。</div>
+          </div>
+          <div class="mcard"><b>M05 交叉弹性</b><span class="badge b-blue">R1/2 执行中</span></div>
+          <div class="mcard"><b>M07 生态锁定</b><span class="badge b-gray">pending</span></div>
+          <div class="mcard"><b>QC(deepseek)</b><span class="badge b-gray">排队</span><br><span style="color:#999">逐方法批量,并发≤4</span></div>
+          <div class="mcard ghost"><b>报告装配</b><br>全部终态后自动开始</div>
+        </div>
+
+        <div class="note" style="margin-top:12px">底部留白区(可选):最近一次 LLM 调用留痕摘要——"M03·R2 · qwen-max · 3.2s · 1.8k tok"。演示时"看得见引擎在转",复用 <span class="fld">llm_call_logs</span>(13.5 占位端点)。</div>
+      </div></div>
+    </div>
+    <div class="annos">
+      <b>布局要点</b>:警示条(冲突)→ 总进度 → 方法卡片网格,信息优先级从"需要你行动"到"只需要你看"。卡片网格 4 列是 8 方法激活矩阵的天然容器;QC 与装配作为"方法卡"同构呈现,不特殊化(引擎视角的诚实)。
+    </div>
+  </div>
+
+  <!-- ═══════════ Frame 4 ═══════════ -->
+  <h2>Frame 4 · P5:报告 + 评测(done,最重的一页,纵向长页面)</h2>
+  <div class="frame">
+    <div class="fhead"><b>诊断报告 · 红米 K80</b><span>1440 × 3000+ · <span class="api">GET /{id}/report</span> 聚合式一次拿全(13.2)</span></div>
+    <div class="screen">
+      <div class="nav"><span class="logo">产品经济学诊断 Agent</span><div class="right"><span class="badge b-green">done</span><span class="btn sm">导出(占位)</span></div></div>
+      <div class="steps">
+        <span class="stp"><span class="dot done">✓</span>路由</span><span class="sln"></span>
+        <span class="stp"><span class="dot done">✓</span>数据</span><span class="sln"></span>
+        <span class="stp"><span class="dot done">✓</span>执行</span><span class="sln"></span>
+        <span class="stp"><span class="dot cur">4</span><b>报告 / 评测</b></span>
+      </div>
+      <div class="body"><div class="col full" style="max-width:900px;margin:0 auto">
+
+        <!-- 报告头 -->
+        <div class="card">
+          <b style="font-size:14px">红米 K80 · 经济学诊断报告</b>
+          <div style="margin-top:6px;color:#666">诊断项 14 条 · 覆盖 6/7 域 · 执行 8 方法(1 失败已登记) · LLM 调用 46 次 · token 82k <span class="note">← 成本叙事,源自留痕汇总(5.3)</span></div>
+          <div style="margin-top:8px">QC 汇总:
+            <span class="badge b-green">pass 11</span>
+            <span class="badge b-amber">warn 2</span>
+            <span class="badge b-red">fail 1</span>
+            <span class="note">← 徽标必须可点击跳详情(6.3:禁止可见但不可用)</span></div>
+          <div class="card warn" style="margin-top:8px;max-width:560px">
+            <b>QC 详情(点开弹层)</b> <span class="fld">qc[]{id,verdict,issue_type,reason}</span>
+            <div style="margin-top:4px">数字:学习率 8% · <span class="tag">量级存疑</span> · 依据:与档案 A3 行原始记录不符
+            <span class="btn sm">维持</span> <span class="btn sm">修正 →</span> <span class="note">Owner 裁决(K08:语义给QC,裁决归人)</span></div>
+          </div>
+        </div>
+
+        <!-- 域章节 -->
+        <div class="card">
+          <b>D1 市场结构</b> <span class="badge b-green">active</span> <span class="fld">domains[].status</span>
+          <div class="di4">
+            <div class="cell"><b>L1 事实</b><br>CR4 = 68%(官方,2025)<span class="tag" style="float:right">官方</span></div>
+            <div class="cell"><b>L2 机制</b><br>规模学习 → 成本护城河</div>
+            <div class="cell"><b>L3 量化</b><br>学习率 ≈8%/代</div>
+            <div class="cell"><b>L4 处方</b><br>维持代际迭代节奏…</div>
+          </div>
+          <div class="chartbox">ECharts 容器 · 份额堆叠图 <span class="fld">charts[]{type,option}</span></div>
+          <div class="note">诊断项四层卡是全报告的原子组件(9.2);证据强度标签(官方/第三方/估算)必显——诚实性的可见层。</div>
+        </div>
+
+        <div class="card">
+          <b>D5 用户价值</b> <span class="badge b-purple">weak 弱适用</span>
+          <div style="color:#888;margin-top:6px">保值率数据不足 3 期 → M09 降级,残余以 TCO 单方法输出。原因显式登记。</div>
+          <div class="note">weak/not_applied 域渲染成占位卡+原因,<b>绝不静默缺席</b>(12.1)。</div>
+        </div>
+
+        <div class="card ghost">D2 / D3 / D4 / D6 同构 · D7 不适用(占位:指纹 F3 强差异化,S4 未触发)</div>
+
+        <!-- 诚实性区 -->
+        <div class="card">
+          <b>冲突仲裁留痕</b> <span class="fld">conflict_log</span> <span class="hl">★</span>
+          <div style="margin-top:4px;font-size:11px;color:#666">M05 vs M01:渗透率口径冲突 → 官方 &gt; 第三方 → 败方降级保留 · <i>平局条款:同强度对撞不仲裁,整体降 conflict 回交 Owner(12.1)</i></div>
+          <div style="margin-top:6px"><b>降级方法登记</b> <span class="fld">downgraded_methods[]</span>:M02 学习曲线(执行超时)</div>
+          <div style="margin-top:4px"><b>局限汇总</b> <span class="fld">limitations</span>:各方法 limitations_statement 拼接</div>
+        </div>
+
+        <!-- 评测区 -->
+        <div class="card" style="border-color:#c4b5fd">
+          <b>评测 · claim 三层对照</b> <span class="api">POST /{id}/claims</span> <span class="api">GET /{id}/evaluation</span> <span class="hl">★(PRD 10.1)</span>
+          <div class="textarea" style="min-height:44px;margin-top:6px">提交 claim 集:3-5 来源 × 3-5 论断 {论断|依据|来源|立场}…</div>
+          <div style="margin-top:8px">
+            <span class="badge b-green">覆盖 3 条(75% ✓ 达标线70%)</span>
+            <span class="badge b-amber">冲突 1 条</span>
+            <span class="badge b-purple">增量 1 条 ★外部未见</span>
+          </div>
+          <div class="card warn" style="margin-top:8px;max-width:600px">
+            <b>冲突档待裁决</b> <span class="api">POST /{id}/claims/{cid}/verdict</span>
+            <div style="margin-top:4px;font-size:11px">外部论断:「K80 保值率高于同档均值」 vs 我方 M09 结论 → <span class="btn sm">外部对</span> <span class="btn sm">我方对</span> <span class="note">裁决留痕=CONF-01 判例"共识可能是错的"(演示素材)</span></div>
+          </div>
+          <div class="note" style="margin-top:6px">评测结果回流走缺陷日志人肉回路(2.4),前端只呈现不提供"自动学习"入口——与架构一致。</div>
+        </div>
+
+      </div></div>
+    </div>
+    <div class="annos">
+      <b>布局要点</b>:纵向单栏长页(阅读流),宽度收在 ~900px 保证行宽舒适。顺序=信任链:<b>总览 → 逐域证据 → 系统的冲突/降级/局限(自曝短板)→ 评测(外部对照)</b>。"自曝短板区"放在正文之后、评测之前,是面试讲述"诚实性是工程实现"的页面证据。
+    </div>
+  </div>
+
+  <div class="footer">纯线框示意 · 实际视觉(色板/字体/密度)由 FRONTEND.md 定 · 布局定稿后回填 ARCHITECTURE.md 14.2 页面表</div>
+</div>
+</body>
+</html>

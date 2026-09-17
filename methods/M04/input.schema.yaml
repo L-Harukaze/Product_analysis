@@ -1,0 +1,71 @@
+# M04 输入表定义（采集prompt生成器读取本文件）
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M04
+version: v0.1
+
+tables:
+  E_anchor_quotes:
+    desc: 锚定话语表（本方法主表）——价格类话语，原文引句强制
+    consumed_by: [STEP0, STEP1, STEP6]
+    fields:
+      date: {type: date, required: true, note: 可锚定至年月级（P3）}
+      tier: {type: string, required: false, note: 涉及档位}
+      quote_original: {type: string, required: true, note: 原文引句，不得改写〔S12〕}
+      claimed_reference: {type: string, required: false, note: 参照对象；无外部参照=非价格锚定（C类）}
+    precondition: P1要求价格类话语≥2条且参照对象可识别
+
+  F_competitor_ref:
+    desc: 竞品参照价表——时点注记强制
+    consumed_by: [STEP2, STEP6]
+    fields:
+      object: {type: string, required: true, note: 参照对象（含具体款型）}
+      price: {type: string, required: true, unit: 万元, note: 点值或区间（区间须注记）}
+      event_date: {type: date, required: true, note: 该价格的事件日期（C2：跨时点offset禁止）}
+      time_note: {type: string, required: false, note: 时点近似注记}
+
+  C_price_events:
+    desc: 价格事件表——参照价回溯源
+    consumed_by: [STEP2, STEP4a, STEP6]
+    fields:
+      date: {type: date, required: true}
+      object: {type: string, required: true}
+      price: {type: number, required: true, unit: 万元}
+      scope: {enum: [own, competitor_ref], required: true}
+      event_type: {type: string, required: false}
+
+  B_events:
+    desc: 权益事件表（新闻级）
+    consumed_by: [STEP5]
+    fields:
+      date: {type: date, required: true}
+      event: {type: string, required: true}
+      magnitude: {type: string, required: true, note: 量级/区间，媒体口径}
+      scope: {type: string, required: false}
+
+  B_detail:
+    desc: 权益明细表（增强层）
+    consumed_by: [STEP5]
+    fields:
+      date: {type: date, required: true}
+      item: {type: string, required: true}
+      value_equivalent: {type: number, required: true, unit: 万元}
+      scope: {type: string, required: false}
+
+  G_sales_structure:
+    desc: 销量结构表——锚有效性交叉验证用，官方数据带原文引句
+    consumed_by: [STEP4b]
+    fields:
+      period: {type: string, required: true}
+      metric: {type: string, required: true, note: 锁单结构/销量结构/交付节奏}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true}
+      quote_original: {type: string, required: false, note: 官方类必带}
+
+  A_config:
+    desc: 配置事实表（按需——仅锚话语涉配置对比时使用；禁混成本估算〔S19〕）
+    consumed_by: [STEP3]
+    required: false
+    fields:
+      version: {type: string, required: true}
+      price_official: {type: number, required: true, unit: 万元}
+      config_vector: {type: object, required: true, note: 仅配置事实}

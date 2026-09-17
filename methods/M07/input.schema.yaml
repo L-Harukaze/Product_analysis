@@ -1,0 +1,31 @@
+# M07 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M07
+version: v0.1
+
+tables:
+  J_eco_evidence:
+    desc: 生态功能证据表（本方法主表，新采集）——官方发布/发布会原文
+    consumed_by: [STEP1, STEP2]
+    fields:
+      component: {type: string, required: true, note: 生态组件名（车机/手机/家居互联等）}
+      function: {type: string, required: true, note: 互联功能描述}
+      quote_original: {type: string, required: true, note: 官方原文引句〔S12〕}
+      date: {type: date, required: false}
+
+  E_anchor_quotes:
+    desc: 话语证据（STEP4与M04交叉：生态叙事是否进入定价话语）
+    consumed_by: [STEP4]
+    fields:
+      date: {type: date, required: true}
+      quote_original: {type: string, required: true}
+      claimed_reference: {type: string, required: false}
+
+  K_device_holdings:
+    desc: 跨设备持有率/使用率（预期未获证——缺口登记）
+    consumed_by: [STEP3]
+    required: false
+    fields:
+      metric: {type: string, required: true, note: 持有率/互联使用率/生态用户复购率}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true}

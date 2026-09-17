@@ -1,0 +1,73 @@
+# S4 输出schema
+method: S4
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [SERIES_TOO_SHORT, EXOGENOUS_SHOCK]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    series:
+      fields:
+        period: {type: string}
+        price: {type: number}
+        output: {type: number, required: false}
+        inventory: {type: number, required: false}
+        upstream_price: {type: number, required: false}
+    lag_structure:
+      fields:
+        lag_periods: {type: string, note: 供给滞后时长（生产周期）}
+        identifiable: {type: boolean, note: false→SERIES_TOO_SHORT}
+        basis: {type: string}
+    phase_judgment:
+      fields:
+        oscillation_form: {enum: [收敛, 循环, 发散, 不可判]}
+        current_phase: {enum: [高位扩产, 过剩下跌, 产能出清, 短缺回升, 不可判]}
+        level: {const: 定性判断, note: 强制标注}
+        evidence: {type: string}
+    pass_through:
+      fields:
+        ratio_interval: {type: string, note: 传导率区间}
+        lag: {type: string, note: 传导时滞}
+        squeeze_point: {type: string, required: false, note: 传导不畅时的挤压环节}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引蛛网定理/周期相位/成本传导率三支柱}
+      L3_quantification: {type: string, required: true}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C3逐条}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M01（集中度背景）/M02（成本侧联动）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

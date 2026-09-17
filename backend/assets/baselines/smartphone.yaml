@@ -1,0 +1,34 @@
+# 品类基线表·表H（ARCHITECTURE 7.1）：品类一次预建，全品类产品复用
+# 档位边界值也是数据（7.1）：代码只实现通用"查表+比边界"，禁止魔法数字（T2）
+# 采集纪律与档案同构：豆包采集+来源URL+置信档（本表为 V1 预置样例，Owner 建档时补真实来源）
+category: 手机
+source_url: https://example.com/baseline/smartphone-v1
+confidence: 第三方
+caliber: 中国大陆市场，2024-2025 统计口径
+
+price_distribution:            # 价格分布分位（元）
+  p25: 1500
+  p50: 2700
+  p75: 5000
+replacement_cycle_months: 28   # 更换周期（月）——行业统计中位（28 个月，有建档依据）
+
+price_tiers:                   # 价格档边界：按分位区间（percentile 语义）
+  低价: {pct_max: 25}
+  中价: {pct_min: 25, pct_max: 75}
+  高价: {pct_min: 75}
+frequency_tiers:               # 频率档边界：更换周期（月）区间
+  高频: {max_months: 18}
+  中频: {min_months: 18, max_months: 36}
+  低频: {min_months: 36}
+
+differentiation_anchor:        # S6 品类基线锚点（F3）
+  强: 一加 Ace（强差异化代表机型）
+  弱: 红米 Note 系列（同质化代表机型）
+ecosystem_anchor:              # S6 品类基线锚点（F4）
+  强: 小米 15（生态绑定强的代表机型）
+  中: iQOO（部分生态协同）
+  无: realme（独立体系，生态绑定弱）
+
+conservative:                  # 仲裁失败/超时的保守档位（3.4：宁可少激活、显式登记，不静默缺席）
+  F3: 中
+  F4: 中

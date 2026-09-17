@@ -1,0 +1,31 @@
+# M02 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M02
+version: v0.1
+
+tables:
+  G_sales_structure:
+    desc: 分月交付序列（本方法地基，GAP-02）——累积产量由此构建
+    consumed_by: [STEP1, STEP6]
+    fields:
+      period: {type: string, required: true, note: 月度}
+      metric: {type: string, required: true, note: 交付量}
+      value: {type: number, required: true, unit: 辆}
+      caliber: {type: string, required: true, note: 中国/全球}
+      quote_original: {type: string, required: false, note: 官方类必带}
+
+  D_cost_params:
+    desc: 成本参数池+分季毛利序列（成本代理来源）
+    consumed_by: [STEP1, STEP4]
+    fields:
+      period: {type: string, required: true, note: 季度/月度}
+      param: {type: string, required: true, note: 单位成本/毛利率/锂价_元每吨}
+      value: {type: string, required: true, note: 点值或区间}
+      anchor_position: {type: string, required: false, note: 时点标注}
+
+  A_config:
+    desc: 版本价格（混配检查C2：ASP混三档的结构漂移）
+    consumed_by: [STEP4]
+    fields:
+      version: {type: string, required: true}
+      price_official: {type: number, required: true, unit: 万元}

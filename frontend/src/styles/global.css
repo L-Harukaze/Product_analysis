@@ -1,0 +1,103 @@
+/*
+ * 非颜色 token + 字体 + 全局基础样式 + 组件质感规范（FRONTEND.md §3.2/§3.3/§3.7）。
+ * 颜色一律由 src/theme/tokens.ts 运行时注入 CSS 变量，本文件零色值。
+ * color-mix 仅允许混入 transparent / 纯黑 / 纯白（明度与透明度调整，不引入新色相）。
+ */
+
+:root {
+  /* 圆角 */
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  /* 间距 scale(组件 margin/padding 一律取档,禁止魔法数字) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* 字号 scale(标题衬线,正文无衬线;中文行高 1.6) */
+  --font-display: 44px;
+  --font-h1: 26px;
+  --font-h2: 19px;
+  --font-h3: 15px;
+  --font-body: 14px;
+  --font-caption: 12px;
+  --font-eyebrow: 11px;
+
+  /* 字族(标题=衬线中文,正文=Inter+系统黑体,eyebrow/代码=等宽) */
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', serif;
+  --font-sans: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* 层级(自定义浮层只用这三档) */
+  --z-sticky: 100;
+  --z-overlay: 1000;
+  --z-toast: 1100;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  color: var(--text-main);
+  background: var(--surface);
+  line-height: 1.7;
+}
+
+/* ———— 组件质感规范（FRONTEND.md §3.7，Owner 参考图定稿）———— */
+
+/* 卡片:描边 + 顶缘一线微亮 + 一点点扩散微光("只需要一点点光") */
+.cc-card {
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--border) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+/* 说明框/代码框:内嵌在卡片里的凹槽效果 */
+.cc-inset {
+  background: var(--surface-inset);
+  border-radius: var(--radius);
+  box-shadow:
+    inset 0 2px 8px color-mix(in srgb, #000 38%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #000 18%, transparent);
+}
+
+/* eyebrow 小标签:等宽 + 拉开字距(中英结合的英文半边) */
+.cc-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--font-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* 衬线标题:出版物气质 */
+.cc-serif {
+  font-family: var(--font-serif);
+  letter-spacing: 0.02em;
+}
+
+/* AntD 按钮阴影(内嵌高级感):主按钮柔光,默认按钮顶缘微亮 */
+.ant-btn-primary {
+  box-shadow: 0 2px 14px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+.ant-btn-default {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent);
+}

@@ -1,0 +1,72 @@
+# M06 输出schema
+method: M06
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [COMPONENT_MISSING, RESIDUAL_MISSING, COMPETITOR_CALIBER_MIXED]}, note: 只允许枚举值}
+
+  assumptions:
+    annual_mileage: {type: string, required: true, note: 年里程假设（P3强制）}
+    holding_years: {type: string, required: true}
+    energy_price: {type: string, required: true, note: 含时点注记}
+    insurance_city: {type: string, required: true, note: 基准城市口径}
+
+  intermediate_tables:
+    components:
+      fields:
+        component: {enum: [购置, 能源, 保养, 保险, 残值]}
+        annual_value: {type: string, note: 缺组件标COMPONENT_MISSING}
+        basis: {type: string}
+        confidence: {enum: [官方, 第三方, 估算]}
+    tco_comparison:
+      fields:
+        object: {type: string, note: 本品/竞品}
+        tco_total: {type: string, unit: 万元}
+        per_km_cost: {type: string, unit: 元/km}
+        caliber_note: {type: string, note: 口径差异注记；不同口径并列禁混算}
+    sensitivity:
+      fields:
+        axis: {type: string, note: 年里程±50%/能源价格±30%}
+        ranking_stable: {type: string, note: TCO排名是否翻转}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引TCO构成/同口径/敏感性三支柱}
+      L3_quantification: {type: string, required: true}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C4逐条}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 典型：M09（残值，双向联动）/M03（权益并轨）}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

@@ -1,0 +1,42 @@
+# M01 输入表定义（采集prompt生成器读取本文件）
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: M01
+version: v0.1
+
+tables:
+  H_share:
+    desc: 市场份额表（本方法主表，新采集）——口径字段强制，交付/上险/零售不可混用
+    consumed_by: [STEP2, STEP3, STEP6]
+    fields:
+      player: {type: string, required: true, note: 厂商/车型}
+      period: {type: string, required: true, note: 月度/季度/年度}
+      volume: {type: number, required: false, note: 销量，辆}
+      share: {type: string, required: true, note: 份额%，点值或分档近似（分档触发GRANULARITY_LOW）}
+      caliber: {type: string, required: true, note: 交付/上险/零售；全球/中国}
+    precondition: P2要求至少2个竞品数据可得
+
+  A_config:
+    desc: 本品价格（定位检验用）
+    consumed_by: [STEP4]
+    fields:
+      version: {type: string, required: true}
+      price_official: {type: number, required: true, unit: 万元}
+
+  C_price_events:
+    desc: 价格事件表（本品+竞品同期价格，P3）
+    consumed_by: [STEP3, STEP4]
+    fields:
+      date: {type: date, required: true}
+      object: {type: string, required: true}
+      price: {type: number, required: true, unit: 万元}
+      scope: {enum: [own, competitor_ref], required: true}
+
+  G_sales_structure:
+    desc: 本品销量结构（供给信号/份额轨迹/互洽核对）
+    consumed_by: [STEP4, STEP6]
+    fields:
+      period: {type: string, required: true}
+      metric: {type: string, required: true, note: 交付量/提车周期/锁单结构}
+      value: {type: string, required: true}
+      caliber: {type: string, required: true}
+      quote_original: {type: string, required: false, note: 官方类必带}

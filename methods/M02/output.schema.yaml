@@ -1,0 +1,68 @@
+# M02 输出schema
+method: M02
+version: v0.1
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [REGRESSION_INFEASIBLE, PROXY_ONLY, C4_NO_SALES_DATA]}, note: 只允许枚举值}
+
+  intermediate_tables:
+    production_cost_series:
+      fields:
+        period: {type: string}
+        cumulative_volume: {type: number, note: 上市起累计，口径声明}
+        unit_cost_proxy: {type: string, note: 成本代理值+代理类型声明}
+        li_price: {type: number, unit: 元/吨, note: C1混杂分离用}
+    regression_result:
+      fields:
+        b_interval: {type: string, note: 斜率置信区间}
+        learning_rate_interval: {type: string, note: 1−2^b，区间输出禁单值}
+        r_squared: {type: number}
+        n_obs: {type: integer, note: <8触发REGRESSION_INFEASIBLE}
+        benchmark_ref: {type: string, note: 与85%曲线对照，仅参照}
+    residual_decomposition:
+      fields:
+        learning_effect: {type: string, note: 分离后学习效应或unquantified}
+        material_effect: {type: string, note: 锂价贡献}
+        bias_direction: {type: string, note: 不可分离时声明高估/低估方向}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true}
+      L2_mechanism: {type: string, required: true, note: 只许援引Wright定律等本包支柱}
+      L3_quantification: {type: string, required: true}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C3逐条；C1分离结论强制}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string}
+      conflict: {type: string}
+      resolution: {type: string}
+      verdict: {type: string}
+      assumptions: {type: array, note: 反推类必附〔S11〕}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string}
+      granularity: {type: string}
+      confidence_required: {type: string}
+      consumed_by: {type: string}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true}

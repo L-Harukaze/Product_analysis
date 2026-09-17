@@ -1,0 +1,26 @@
+# M03 图表绑定（模板定义见 _shared/chart_templates.yaml，本文件只绑中间表→模板+变体选择规则）
+method: M03
+
+bindings:
+  - source_table: ladder
+    template: T-LADDER-01
+    variant_rule: 档位≥3 → V3
+    required: true
+
+  - source_table: increments
+    template: T-SCATTER-02
+    variant_rule: |
+      观测<3 或 结构占比不可得 → V0；
+      观测≥3 且 结构占比可得 → V1（气泡=结构占比）
+    required: true
+
+  - source_table: timeline
+    template: T-LINE-03
+    variant_rule: |
+      B_detail（精确折算）→ V2 双带；
+      B_PARTIAL_NEWS（媒体口径近似）→ V2e 事件带（离散标注，禁插值）；
+      B_MISSING → V1 单带；
+      触发 C_TIMELINE_PARTIAL → 空窗段断点标注
+    required: true
+
+adaptation_log_required: true

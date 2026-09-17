@@ -1,0 +1,33 @@
+# S4 输入表定义
+# 通用约束：每行数据必带 source(url) + confidence(官方/第三方/估算) + caliber(口径) 三件套
+method: S4
+version: v0.1
+
+tables:
+  L_commodity_series:
+    desc: 大宗品时间序列（本方法主表，EDB结构化指标优先）
+    consumed_by: [STEP1, STEP2, STEP3, STEP6]
+    fields:
+      period: {type: string, required: true, note: 月度/季度}
+      price: {type: number, required: true, note: 本品价格}
+      output: {type: number, required: false, note: 产量/产能}
+      inventory: {type: number, required: false, note: 库存（C3缓冲检验）}
+      caliber: {type: string, required: true, note: 产能/产量/销量口径区分}
+
+  D_cost_params:
+    desc: 上游原材料价格序列（成本传导用）
+    consumed_by: [STEP5]
+    fields:
+      period: {type: string, required: true}
+      param: {type: string, required: true, note: 上游原料名}
+      value: {type: number, required: true}
+      caliber: {type: string, required: true}
+
+  K_policy_timeline:
+    desc: 政策干预事件（C2检验：限产/收储等）
+    consumed_by: [STEP6]
+    required: false
+    fields:
+      date: {type: date, required: true}
+      policy: {type: string, required: true}
+      provision: {type: string, required: true, note: 条款原文引句}

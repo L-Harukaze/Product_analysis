@@ -1,0 +1,13 @@
+# M08 图表绑定（模板定义见 _shared/chart_templates.yaml）
+method: M08
+
+bindings:
+  - source_table: [market_break, own_break]
+    template: T-LINE-03
+    variant_rule: |
+      断点前后序列 → V1 单带+断点标注（复用现有模板）；
+      触发 EVENT_WINDOW_MISSING → 断点处断链标注，禁插值；
+      T-RDD-01（断点设计专用双窗口图）为 v0.2 候选，未批准前用 V1
+    required: false
+
+adaptation_log_required: true

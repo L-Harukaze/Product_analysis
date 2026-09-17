@@ -1,0 +1,78 @@
+# M03 输出schema（每轮prompt必须自携本文件相关部分，禁悬空引用〔S17〕）
+method: M03
+version: v1.0
+
+output:
+  run:
+    run_id: {type: string, required: true}
+    skill_version: {type: string, required: true}
+    downgrade_flags: {type: array, items: {enum: [B_MISSING, B_PARTIAL_NEWS, A_CONFIG_MISSING, COST_BASIS_MISSING, C_TIMELINE_PARTIAL, C4_NO_SALES_DATA]}, note: 只允许枚举值，禁自拟〔S4〕}
+
+  intermediate_tables:
+    ladder:
+      fields:
+        version: {type: string}
+        price_official: {type: number, unit: 万元}
+        price_effective: {type: number, unit: 万元, note: 先按官方价，STEP5并轨后更新}
+        config_vector: {type: object, note: 仅配置事实〔S19〕}
+    increments:
+      fields:
+        pair: {type: string, note: 相邻档位对}
+        deltaP: {type: number, unit: 万元}
+        deltaC_key: {type: array, note: 关键配置增量项，STEP4b逐项归轴消费}
+        deltaCost_est: {type: string, unit: 万元, note: 区间，绑锚定时点}
+        capture_ratio: {type: string, note: 区间；跨零→方向不可判}
+    anchors:
+      fields:
+        anchor_id: {type: string}
+        tier: {type: string, required: false}
+        claimed_reference: {type: string}
+        implied_ref_price: {type: string, note: 含口径/时点注记}
+        actual_price: {type: number, unit: 万元}
+        offset: {type: string, note: 本产品价−参照价，负=低于参照；可为区间}
+    timeline:
+      fields:
+        date: {type: date}
+        scope: {type: string, note: 档位/competitor_ref}
+        action_type: {type: string, note: 价格事件/权益事件/边界注记}
+        value: {type: string}
+        note: {type: string, required: false, note: 空窗段/选装登记等注记}
+
+  diagnostic_items:
+    type: array
+    min: 2
+    max: 4
+    item_fields:
+      L1_fact: {type: string, required: true, note: 数字+口径+来源+置信；官方类带原文引句}
+      L2_mechanism: {type: string, required: true, note: 只许援引本包理论支柱；禁嵌未进L1/中间表的数字}
+      L3_quantification: {type: string, required: true, note: 缺数据标"未量化+原因"，禁编造}
+      L4_prescription: {type: string, required: true}
+      confounder_check: {type: string, required: true, note: C1-C4逐条检查结论}
+      evidence_strength: {enum: [官方, 第三方, 估算], required: true}
+      chart_refs: {type: array, items: {type: string}, note: 引用chart.yaml定义的图}
+
+  conflict_resolutions:
+    type: array
+    item_fields:
+      checkpoint: {type: string, note: 三类枚举检查点之一}
+      conflict: {type: string}
+      resolution: {type: string, note: 算术互洽/置信等级/口径核对}
+      verdict: {type: string}
+      assumptions: {type: array, note: 反推类必附，含全部被固定变量〔S11〕}
+
+  data_gap_reports:
+    type: array
+    item_fields:
+      missing: {type: string, note: 缺什么字段}
+      granularity: {type: string, note: 什么粒度}
+      confidence_required: {type: string}
+      consumed_by: {type: string, note: 哪个STEP消费}
+
+  method_xref:
+    type: array
+    item_fields:
+      target_method: {type: string, note: 必须过注册表编号校验〔P1教训〕}
+      hint: {type: string}
+      data_needed: {type: string}
+
+  limitations_statement: {type: string, required: true, note: 不得删除}
