@@ -1548,6 +1548,30 @@
   color: var(--warning-text);
 }
 
+/* "填入建议值"（修复建议卡片内的快捷动作；只是预填编辑框，提交仍需人工核对） */
+.arch-hint-apply {
+  margin-left: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: var(--font-caption);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.arch-hint-apply:hover {
+  color: color-mix(in srgb, var(--primary) 75%, white);
+}
+
+/* 标题栏问题行导航（↑/↓ + 总数） */
+.arch-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .arch-row-n {
   position: absolute;
   top: var(--space-2);

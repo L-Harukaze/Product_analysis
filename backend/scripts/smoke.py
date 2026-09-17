@@ -342,6 +342,21 @@ def main() -> None:
             print(f"12 error 档阻断通过：{body['reason'][:70]}…（详情 blocking_errors={len(errs)} 条）")
             assert client.delete(f"/diagnoses/{er_id}").status_code == 200, "error 档诊断清理失败"
 
+        # —— 12b（S28 迭代）：口径混算的"具体替换建议"（fixes）——纯函数构造，不走端点/LLM ——
+        from app.services import invariants as _inv
+        fx = _inv.check({"M": [
+            {"segment": "测试分组", "period": "2025", "volume": 100.0,
+             "confidence": "官方", "source_url": "u1"},
+            {"segment": "测试分组", "period": "2025", "volume": 120.0,
+             "confidence": "第三方", "source_url": "u2"},
+        ]})
+        assert fx and fx[0]["invariant"] == "口径混算", f"混档应判口径混算：{fx}"
+        _fixes = fx[0].get("fixes") or []
+        assert [x["action"] for x in _fixes] == ["keep", "replace"], f"应给 keep+replace 建议：{_fixes}"
+        assert _fixes[1]["from"] == 120.0 and _fixes[1]["to"] == 100.0 and _fixes[1]["row"] == "表M 行 2", \
+            f"替换建议应为 表M 行 2 的 volume 120 → 100（对齐官方基准）：{_fixes}"
+        print("12b 口径混算替换建议通过：表M 行 2 的 volume 120 → 100（对齐官方基准）")
+
         print("\n== 11. 事务 C/D/E：execute → 管道执行（真实 LLM）→ done → report → claims 评测 ==")
         import time as _time
         from app import db as _db

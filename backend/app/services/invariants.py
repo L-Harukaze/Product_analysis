@@ -100,11 +100,16 @@ def _parse_period_window(value: str) -> tuple[float, float] | None:
     return (y0 + (m0 - 1) / 12.0, y1 + (m1 - 1) / 12.0)
 
 
-def _finding(invariant: str, detail: str, rows: list[str]) -> dict[str, Any]:
-    """冲突条目（types.ts L2Conflict 逐字：{id, invariant, detail, rows}）+ 内部 tier。"""
+def _finding(invariant: str, detail: str, rows: list[str],
+             fixes: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """冲突条目（types.ts L2Conflict 逐字：{id, invariant, detail, rows}）+ 内部 tier。
+
+    fixes（可选，契约增量 2026-09-17 S28 迭代）：逐行替换建议——前端档案库在标红行下方
+    渲染"建议 X 替换为 Y"（比通用指引具体一个层级）。
+    """
     seed = f"{invariant}|{','.join(sorted(rows))}|{detail[:80]}"
     cid = "C-" + hashlib.md5(seed.encode("utf-8")).hexdigest()[:6]
-    return {
+    item = {
         "id": cid,
         "invariant": invariant,
         "tier": INVARIANT_LABELS[invariant],
@@ -112,10 +117,63 @@ def _finding(invariant: str, detail: str, rows: list[str]) -> dict[str, Any]:
         "rows": rows,
         "handled": None,
     }
+    if fixes:
+        item["fixes"] = fixes
+    return item
 
 
 def _row_ref(tid: str, idx: int) -> str:
     return f"表{tid} 行 {idx}"
+
+
+# ———— 修复建议（S28 迭代）：以最高置信档为基准的逐行替换建议 ————
+
+_SOURCE_RANK = {"官方": 0, "第三方": 1, "估算": 2}  # 官方>第三方>估算>未标（同 _arbitrate 的仲裁序）
+
+_EQUAL_EPS = 1e-9
+
+
+def _build_fixes(tid: str, field: str, items: list[tuple[int, dict[str, Any]]]) -> list[dict[str, Any]] | None:
+    """组内同字段取值不一致 → 逐行修复建议（前端行下卡片"建议 X 替换为 Y"的数据源）。
+
+    规则（**宁可少给不可误导**——与误报裁量同一纪律）：
+    - 基准 = 最高置信档（官方>第三方>估算>未标）且**该档内取值唯一**的行；
+    - 最高档内部就取值不一致（无法仲裁）、或无从定基准 → 返回 None（前端回退通用指引，交人工核对）；
+    - 基准行给 action="keep"（保留说明），值已一致的行给 keep，其余行给 action="replace"
+      （{row, field, action, from, to, note}，row 为 `表X 行 N` 引用）。
+    """
+    ranked = sorted(items, key=lambda it: (_SOURCE_RANK.get(str(it[1].get("confidence", "")), 3), it[0]))
+    top_rank = _SOURCE_RANK.get(str(ranked[0][1].get("confidence", "")), 3)
+    top = [it for it in ranked if _SOURCE_RANK.get(str(it[1].get("confidence", "")), 3) == top_rank]
+    top_vals = {round(float(row[field]), 6) for _, row in top}
+    if len(top_vals) != 1:
+        return None  # 最高档内部不一致 → 无唯一基准，不猜
+    best_i, best_row = top[0]
+    best_v = float(best_row[field])
+    best_conf = str(best_row.get("confidence", "")) or "未标"
+    best_ref = _row_ref(tid, best_i)
+    fixes: list[dict[str, Any]] = [{
+        "row": best_ref, "field": field, "action": "keep",
+        "from": best_v, "to": best_v,
+        "note": f"本行是同组最高置信档（{best_conf}）——建议保留，其余行应对齐到本值",
+    }]
+    for i, row in items:
+        if i == best_i:
+            continue
+        v = float(row[field])
+        if abs(v - best_v) <= _EQUAL_EPS:
+            fixes.append({
+                "row": _row_ref(tid, i), "field": field, "action": "keep",
+                "from": v, "to": best_v,
+                "note": f"本行取值与同组基准一致（{best_ref}）——保留即可",
+            })
+        else:
+            fixes.append({
+                "row": _row_ref(tid, i), "field": field, "action": "replace",
+                "from": v, "to": best_v,
+                "note": f"与同组最高置信档保持一致（对齐 {best_ref} · {best_conf}）",
+            })
+    return fixes
 
 
 def check(rows_by_table: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
@@ -200,19 +258,21 @@ def _check_source_collision(findings: list[dict[str, Any]], tid: str, rows: list
             calibers = {str(row.get("caliber", "")) for _, row in items}
             mixed = len(confs) > 1 or len(calibers) > 1
             where = f"（{key}｜{period}）" if (key or period) else ""
+            # 具体替换建议（S28 迭代）：混档场景以最高置信档为基准；同档不一致 → None（人工核对）
+            fixes = _build_fixes(tid, f, items)
             if mixed:
                 findings.append(_finding(
                     "口径混算",
                     f"字段 {f} 同组{where}取值不一致且口径/置信档混用："
                     f"置信={'/'.join(sorted(c for c in confs if c)) or '-'}、"
                     f"口径={'/'.join(sorted(c for c in calibers if c)) or '-'}（官方与第三方不可混算）",
-                    [_row_ref(tid, i) for i, _ in values]))
+                    [_row_ref(tid, i) for i, _ in values], fixes))
             else:
                 findings.append(_finding(
                     "跨源碰撞",
                     f"字段 {f} 同组{where}双路径取值不一致："
                     + "、".join(f"{v:g}" for _, v in values) + f"（口径={'/'.join(sorted(c for c in calibers if c)) or '-'}）",
-                    [_row_ref(tid, i) for i, _ in values]))
+                    [_row_ref(tid, i) for i, _ in values], fixes))
 
 
 # ———— 时窗错位（warn）————

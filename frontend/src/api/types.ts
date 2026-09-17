@@ -90,12 +90,25 @@ export interface DataRejected {
 }
 export type DataResponse = DataAccepted | DataRejected;
 
+/** L2 修复建议（契约增量 2026-09-17 S28 迭代）：逐行替换建议——"建议 X 替换为 Y"的数据源。
+ *  仅"口径混算/跨源碰撞"在可定基准时生成（最高置信档为基准；同档不一致则不猜、无此字段）。 */
+export interface L2Fix {
+  row: string; // 行引用（"表M 行 3"，1-based）
+  field: string;
+  action: 'keep' | 'replace';
+  from: number; // 当前值
+  to: number; // 建议目标值
+  note: string; // 说明（基准/对齐依据）
+}
+
 /** L2 冲突（11.3） */
 export interface L2Conflict {
   id: string;
   invariant: string; // 不变式类型
   detail: string;
   rows: string[]; // 涉及档案行
+  /** 具体替换建议（S28 迭代；缺省 = 无唯一基准，前端回退通用指引） */
+  fixes?: L2Fix[];
 }
 
 /** POST /execute 响应：202 或 409+冲突清单 */

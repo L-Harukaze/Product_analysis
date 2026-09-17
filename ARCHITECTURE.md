@@ -897,6 +897,7 @@ L3 调用细节已定（6.3：白名单输入、五类枚举、逐条全量、�
 - `archive_rows: {表ID: [行...]}`——档案库 Drawer 展示与冲突行标红定位（L2 行引用格式 `表B 行 2`，1-based，与 11.2 同构）
 - `pending_conflicts: L2Conflict[]` / `pending_conflicts_n`——未裁决 conflict 档；`stage_hint` 在 ready 态据此返回 `N 处数据冲突待处理`
 - `blocking_errors: L2Conflict[]`——error 档检出（算术闭合/口径混算；必须修数、无"维持"语义）。前端据此渲染常驻阻断卡片 + 「手动更改」修数入口（S28）；`/execute` 的 error 档 409 体保持 13.3 通用守卫体三字段不变，可见性由本字段承担（2026-09-17 补定）
+- L2 检出条目增量 `fixes?: [{row, field, action: "keep"|"replace", from, to, note}]`——逐行修复建议（S28 走查迭代）：口径混算/跨源碰撞在"最高置信档唯一值"可定基准时生成（其余行给"建议 X 替换为 Y"；同档不一致**不猜**、无此字段回退通用指引）。档案库标红行下卡片与「填入建议值」的数据源（仅为预填，提交仍需人工核对）
 - 进度 `handled?: "retried" | "skipped"`——失败方法的用户处置标记（非契约枚举，Owner 微调展示扩展）
 
 **`POST /qc/{qid}/verdict` 请求**：`{"verdict": "维持|修正", "note": "可选注记"}`

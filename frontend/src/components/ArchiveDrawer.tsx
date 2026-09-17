@@ -1,6 +1,11 @@
 /**
- * 档案库 Drawer（Owner 微调 2026-09-16 新增；2026-09-17 S25③ 修正"改数不落库"；S28 扩 error 档）。
+ * 档案库 Drawer（Owner 微调 2026-09-16 新增；2026-09-17 S25③ 修正"改数不落库"；S28 扩 error 档 + 走查迭代）。
  * 冲突裁决 / L2 error 档阻断的修数入口：展示全部已入档数据，检出问题行（冲突或 error 档）标红可直接编辑。
+ *
+ * S28 走查迭代（Owner 反馈）：
+ * - 标红行下方黄色卡片给**具体建议**：优先"建议将 X 从 A 替换为 B"（后端 fixes 逐行建议，
+ *   可一键填入）；无唯一基准时回退通用指引（fixHintOf）
+ * - 打开抽屉自动从顶部缓出到第一条问题行；标题栏 ↑/↓ 在问题行之间导航
  *
  * ⚠️ 整表提交约束（8.3 按表覆盖，必读）：提交给 /data 的每一个表都**被视为该表的最新全量快照**
  * ——后端会先作废该表旧行再写入。所以本地改了几行，也必须提交**该表的全部行**
@@ -8,15 +13,15 @@
  *
  * 未修改任何数据时的确认动作（S28 分叉，两条路径都必须保住）：
  * - 冲突场景 → 复用 verdict 端点留痕（"已查看，未修改"，11.3 幂等，曾由校验卡回归）
- * - 纯 error 档场景 → error 无"维持"语义（不可裁决），直接返回、不落库
+ * - 纯 error 档场景 → error 无"维持"语义（不可裁决），确认按钮禁用
  */
 
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Alert, Button, Drawer, Input } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import { ArrowDownOutlined, ArrowUpOutlined, EditOutlined } from '@ant-design/icons';
 import { api } from '../api/diagnoses';
-import type { DiagnosisDetail, L2Conflict } from '../api/types';
+import type { DiagnosisDetail, L2Conflict, L2Fix } from '../api/types';
 import { useInvalidateDx } from '../hooks/useDiagnosis';
 import { fixHintOf, tableLabel } from '../labels';
 
@@ -86,6 +91,52 @@ export default function ArchiveDrawer({
     );
     return map;
   }, [detail.pending_conflicts, detail.blocking_errors]);
+
+  // 检出问题行数（冲突 ∪ error）：>0 时标题栏显示 ↑/↓ 导航箭头
+  const flaggedN = useMemo(() => {
+    const set = new Set<string>();
+    conflictCells.forEach((rowsSet, t) => rowsSet.forEach((r) => set.add(`${t}-${r}`)));
+    errorCells.forEach((rowsSet, t) => rowsSet.forEach((r) => set.add(`${t}-${r}`)));
+    return set.size;
+  }, [conflictCells, errorCells]);
+
+  /** "填入建议值"：把建议目标值写进该字段编辑框（可见、可改；提交仍需人工核对，非自动落库） */
+  const applyFix = (fix: L2Fix) => {
+    const p = parseRowRef(fix.row);
+    if (!p) return;
+    setEdits((prev) => ({ ...prev, [`${p.table}-${p.row - 1}-${fix.field}`]: String(fix.to) }));
+  };
+
+  /** 上/下一个问题行（标题栏箭头）：按视口中线判据找邻居 → 平滑滚动 */
+  const jumpTo = (dir: 'prev' | 'next') => {
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>('.ant-drawer-body .arch-row.is-conflict'),
+    );
+    if (nodes.length === 0) return;
+    const rect = document.querySelector('.ant-drawer-body')?.getBoundingClientRect();
+    const mid = rect ? (rect.top + rect.bottom) / 2 : window.innerHeight / 2;
+    let target: HTMLElement | undefined;
+    if (dir === 'next') {
+      // 当前行滚到中线后其 top 略高于 mid → find(top > mid) 恰好取到"下一个"
+      target = nodes.find((n) => n.getBoundingClientRect().top > mid) ?? nodes[nodes.length - 1];
+    } else {
+      const above = nodes.filter((n) => n.getBoundingClientRect().bottom < mid);
+      target = above[above.length - 1] ?? nodes[0];
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  // 打开抽屉后自动从顶部"缓出"到第一条问题行（Owner 反馈：点「手动更改」直接到第一处错误）
+  useEffect(() => {
+    if (!open) return;
+    // 等抽屉滑入动画（~300ms）结束再滚，避免与入场动画叠加
+    const t = window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>('.ant-drawer-body .arch-row.is-conflict')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [open]);
 
   const verdict = useMutation({
     mutationFn: () =>
@@ -162,6 +213,29 @@ export default function ArchiveDrawer({
       width={680}
       title={
         <span className="cc-serif">数据档案库 · 手动更改</span>
+      }
+      extra={
+        flaggedN > 0 ? (
+          <div className="arch-nav">
+            <span className="dim">{flaggedN} 处问题</span>
+            <Button
+              size="small"
+              shape="circle"
+              icon={<ArrowUpOutlined />}
+              title="上一处问题"
+              aria-label="上一处问题"
+              onClick={() => jumpTo('prev')}
+            />
+            <Button
+              size="small"
+              shape="circle"
+              icon={<ArrowDownOutlined />}
+              title="下一处问题"
+              aria-label="下一处问题"
+              onClick={() => jumpTo('next')}
+            />
+          </div>
+        ) : undefined
       }
     >
       <div className="dim" style={{ marginBottom: 16 }}>
@@ -246,17 +320,44 @@ export default function ArchiveDrawer({
                     {/* 黄色修复提示卡片（S28 走查迭代）：该行相关检出的问题说明 + 通用"怎么改"指引 */}
                     {findings.length > 0 && (
                       <div className="arch-hint">
-                        {findings.map((c) => (
-                          <div key={c.id} className="arch-hint-item">
-                            <div>
-                              <b>⚠ {c.invariant}</b>
-                              <span className="dim">：{c.detail}</span>
+                        {findings.map((c) => {
+                          // 行级具体建议（S28 迭代）：后端 fixes 里指向本行的那条优先展示
+                          const mine = c.fixes?.find((x) => x.row === `表${tableId} 行 ${i + 1}`);
+                          return (
+                            <div key={c.id} className="arch-hint-item">
+                              <div>
+                                <b>⚠ {c.invariant}</b>
+                                <span className="dim">：{c.detail}</span>
+                              </div>
+                              {mine ? (
+                                <div className="arch-hint-fix">
+                                  {mine.action === 'replace' ? (
+                                    <>
+                                      建议将 {mine.field} 从 <b>{mine.from}</b> 替换为 <b>{mine.to}</b>
+                                      <span className="dim">（{mine.note}）</span>
+                                      <button
+                                        type="button"
+                                        className="arch-hint-apply"
+                                        onClick={() => applyFix(mine)}
+                                      >
+                                        填入建议值
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      建议保留本值 <b>{mine.to}</b>
+                                      <span className="dim">（{mine.note}）</span>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                fixHintOf(c.invariant) && (
+                                  <div className="arch-hint-fix">怎么改：{fixHintOf(c.invariant)}</div>
+                                )
+                              )}
                             </div>
-                            {fixHintOf(c.invariant) && (
-                              <div className="arch-hint-fix">怎么改：{fixHintOf(c.invariant)}</div>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </Fragment>
