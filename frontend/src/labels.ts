@@ -62,6 +62,23 @@ export function rowsRefLabel(rows: string[], nameOf: (table: string) => string |
     .join('；');
 }
 
+/**
+ * L2 不变式 → "怎么改"操作指引（展示层通用文案，五类与 `services/invariants.py` 一一对应；
+ * 不含 per-方法知识——指引只说明"把值改成哪种合法形态"，不替用户决定改哪个值）。
+ * 用于档案库标红行下方的黄色提示卡片（S28 走查迭代）。
+ */
+export const INVARIANT_FIX_HINTS: Record<string, string> = {
+  '算术闭合': '把同一组份额数值调至合计 = 1',
+  '口径混算': '同一分组只保留一种口径的数值——把不一致的行改成与保留口径一致的值（官方与第三方不可混算）',
+  '跨源碰撞': '两个来源取值不一致——核对后改成一致值；或先在冲突面板「拒绝变更」保留其一',
+  '时窗错位': '修正该行时间窗的起止（起点应早于止点）',
+  '值越界': '把数值改到合理域内（份额 0-1 或 0-100；价格/量/额非负）',
+};
+
+export function fixHintOf(invariant: string): string | undefined {
+  return INVARIANT_FIX_HINTS[invariant];
+}
+
 /** 指纹判定来源（契约枚举）→ 可读名 */
 export const SOURCE_LABELS: Record<string, string> = {
   'L1 规则': '规则直判',

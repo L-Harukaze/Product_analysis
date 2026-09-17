@@ -11,14 +11,14 @@
  * - 纯 error 档场景 → error 无"维持"语义（不可裁决），直接返回、不落库
  */
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Alert, Button, Drawer, Input } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { api } from '../api/diagnoses';
-import type { DiagnosisDetail } from '../api/types';
+import type { DiagnosisDetail, L2Conflict } from '../api/types';
 import { useInvalidateDx } from '../hooks/useDiagnosis';
-import { tableLabel } from '../labels';
+import { fixHintOf, tableLabel } from '../labels';
 
 /** 解析冲突行引用（'表B 行 2' → B 表第 2 行，1-based） */
 function parseRowRef(ref: string): { table: string; row: number } | null {
@@ -71,6 +71,21 @@ export default function ArchiveDrawer({
     );
     return map;
   }, [detail.blocking_errors]);
+
+  // 行 → 检出条目（冲突 + error 合并）：标红行下方黄色"怎么改"提示卡片的数据源（S28 走查迭代）。
+  // 一条聚合约束可能引用多行——每行下方都给出该检出的说明 + 通用修复指引。
+  const cellFindings = useMemo(() => {
+    const map = new Map<string, L2Conflict[]>();
+    [...(detail.pending_conflicts ?? []), ...(detail.blocking_errors ?? [])].forEach((c) =>
+      c.rows.forEach((r) => {
+        const p = parseRowRef(r);
+        if (!p) return;
+        const key = `${p.table}-${p.row}`;
+        map.set(key, [...(map.get(key) ?? []), c]);
+      }),
+    );
+    return map;
+  }, [detail.pending_conflicts, detail.blocking_errors]);
 
   const verdict = useMutation({
     mutationFn: () =>
@@ -191,41 +206,60 @@ export default function ArchiveDrawer({
                 const isConflict = conflictRows.has(i + 1);
                 const isError = errorRows.has(i + 1);
                 const flagged = isConflict || isError;
+                const findings = cellFindings.get(`${tableId}-${i + 1}`) ?? [];
                 return (
-                  <div key={i} className={`arch-row ${flagged ? 'is-conflict' : ''}`}>
-                    <span className="arch-row-n">{i + 1}</span>
-                    {isConflict && (
-                      <span className="arch-conflict-badge">
-                        <EditOutlined /> 冲突数据 · 可修改
-                      </span>
-                    )}
-                    {!isConflict && isError && (
-                      <span className="arch-conflict-badge">
-                        <EditOutlined /> 错误数据 · 可修改
-                      </span>
-                    )}
-                    <div className="arch-row-fields">
-                      {Object.entries(row).map(([field, value]) => {
-                        const key = `${tableId}-${i}-${field}`;
-                        const editable = flagged && typeof value !== 'object';
-                        return (
-                          <div key={field} className="arch-field">
-                            <span className="arch-field-k">{field}</span>
-                            {editable ? (
-                              <Input
-                                size="small"
-                                className="arch-field-input"
-                                value={edits[key] ?? String(value)}
-                                onChange={(e) => setEdits({ ...edits, [key]: e.target.value })}
-                              />
-                            ) : (
-                              <span className="arch-field-v">{String(value)}</span>
+                  <Fragment key={i}>
+                    <div className={`arch-row ${flagged ? 'is-conflict' : ''}`}>
+                      <span className="arch-row-n">{i + 1}</span>
+                      {isConflict && (
+                        <span className="arch-conflict-badge">
+                          <EditOutlined /> 冲突数据 · 可修改
+                        </span>
+                      )}
+                      {!isConflict && isError && (
+                        <span className="arch-conflict-badge">
+                          <EditOutlined /> 错误数据 · 可修改
+                        </span>
+                      )}
+                      <div className="arch-row-fields">
+                        {Object.entries(row).map(([field, value]) => {
+                          const key = `${tableId}-${i}-${field}`;
+                          const editable = flagged && typeof value !== 'object';
+                          return (
+                            <div key={field} className="arch-field">
+                              <span className="arch-field-k">{field}</span>
+                              {editable ? (
+                                <Input
+                                  size="small"
+                                  className="arch-field-input"
+                                  value={edits[key] ?? String(value)}
+                                  onChange={(e) => setEdits({ ...edits, [key]: e.target.value })}
+                                />
+                              ) : (
+                                <span className="arch-field-v">{String(value)}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {/* 黄色修复提示卡片（S28 走查迭代）：该行相关检出的问题说明 + 通用"怎么改"指引 */}
+                    {findings.length > 0 && (
+                      <div className="arch-hint">
+                        {findings.map((c) => (
+                          <div key={c.id} className="arch-hint-item">
+                            <div>
+                              <b>⚠ {c.invariant}</b>
+                              <span className="dim">：{c.detail}</span>
+                            </div>
+                            {fixHintOf(c.invariant) && (
+                              <div className="arch-hint-fix">怎么改：{fixHintOf(c.invariant)}</div>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        ))}
+                      </div>
+                    )}
+                  </Fragment>
                 );
               })}
             </div>

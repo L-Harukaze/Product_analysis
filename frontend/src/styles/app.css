@@ -1522,6 +1522,32 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--danger) 12%, transparent);
 }
 
+/* 标红行下方的修复提示卡片（S28 走查迭代）：黄色 warn 语义——问题说明 + 通用"怎么改"指引 */
+.arch-hint {
+  margin: 2px 0 var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-left: 3px solid color-mix(in srgb, var(--warning-text) 55%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+.arch-hint-item {
+  font-size: var(--font-caption);
+  color: var(--text-main);
+}
+
+.arch-hint-item b {
+  color: var(--warning-text);
+}
+
+.arch-hint-fix {
+  margin-top: 2px;
+  color: var(--warning-text);
+}
+
 .arch-row-n {
   position: absolute;
   top: var(--space-2);
