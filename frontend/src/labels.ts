@@ -41,6 +41,27 @@ export function tableLabel(t: string): string {
   return TABLE_LABELS[t] ?? `数据表 ${t}`;
 }
 
+/**
+ * 行引用组（L2 的 `表X 行 N`，1-based）→ 可读文案——map-with-fallback：
+ * 表名查得到就翻译、查不到回退原始代号（逐表补全映射，不做半吊子直出）。
+ * 同一表的行合并展示：`市场结构 · 销量与份额序列（第 2、3 行）`。
+ *
+ * nameOf 由调用方从 `detail.missing_data` 构建——后端为每张**激活方法所需表**提供
+ * 显示名（含 A-G 之外的扩展表）；L2 引用到的表必在该集合内（与 needed 同源）。
+ */
+export function rowsRefLabel(rows: string[], nameOf: (table: string) => string | undefined): string {
+  const groups = new Map<string, number[]>();
+  for (const ref of rows) {
+    const m = ref.match(/表([A-Z])\s*行\s*(\d+)/);
+    if (!m) continue;
+    groups.set(m[1], [...(groups.get(m[1]) ?? []), Number(m[2])]);
+  }
+  if (groups.size === 0) return rows.join('、');
+  return [...groups.entries()]
+    .map(([t, ns]) => `${nameOf(t) ?? `表${t}`}（第 ${ns.join('、')} 行）`)
+    .join('；');
+}
+
 /** 指纹判定来源（契约枚举）→ 可读名 */
 export const SOURCE_LABELS: Record<string, string> = {
   'L1 规则': '规则直判',

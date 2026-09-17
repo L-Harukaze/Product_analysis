@@ -16,7 +16,7 @@ import { api } from '../api/diagnoses';
 import type { DataError, DiagnosisDetail, FingerprintItem } from '../api/types';
 import { useInvalidateDx } from '../hooks/useDiagnosis';
 import { SAMPLE_OK_D, SAMPLE_OK_F, SAMPLE_REJECT_D } from '../mocks/fixtures';
-import { SOURCE_LABELS, methodLabel, tableLabel } from '../labels';
+import { SOURCE_LABELS, methodLabel, rowsRefLabel, tableLabel } from '../labels';
 import ArchiveDrawer from '../components/ArchiveDrawer';
 import AnalysisHistoryCard from '../components/AnalysisHistoryCard';
 
@@ -27,6 +27,9 @@ export default function WorkspacePage() {
   const isReady = detail.status === 'ready';
   // L2 error 档检出（必须修数的硬伤）：详情驱动——阻断卡片与提交区显示策略共用（S28）
   const blockingErrors = detail.blocking_errors ?? [];
+  // L2 行引用（"表M 行 2"）的展示翻译：表名来自缺数清单（后端为每张激活表提供显示名），
+  // 查不到回退代号（map-with-fallback，术语红线：展示层不直出代号）
+  const tableNameOf = (t: string) => detail.missing_data?.find((m) => m.table === t)?.name;
 
   const [payload, setPayload] = useState('');
   // 档案库"手动更改"生成的整表修正稿提示（8.3：提交=该表整体覆盖，务必让 Owner 知道）
@@ -130,7 +133,7 @@ export default function WorkspacePage() {
                   <div className="ws-conflict-text">
                     <b>{c.invariant}</b>
                     <div>{c.detail}</div>
-                    <div className="dim">涉及数据：{c.rows.join('、')}</div>
+                    <div className="dim">涉及数据：{rowsRefLabel(c.rows, tableNameOf)}</div>
                   </div>
                 </div>
               ))}
@@ -162,7 +165,7 @@ export default function WorkspacePage() {
                   <div className="ws-conflict-text">
                     <b>{c.invariant}</b>
                     <div>{c.detail}</div>
-                    <div className="dim">涉及数据：{c.rows.map((r) => r.replace('表', '').replace('行', ' 行')).join('、')}</div>
+                    <div className="dim">涉及数据：{rowsRefLabel(c.rows, tableNameOf)}</div>
                   </div>
                   <div className="ws-conflict-actions">
                     <Button size="small" type="primary" ghost icon={<DatabaseOutlined />} onClick={() => setArchiveOpen(true)}>

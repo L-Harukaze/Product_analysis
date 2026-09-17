@@ -325,6 +325,8 @@ export function toDetail(dx: MockDx): DiagnosisDetail {
     archive_summary: dx.archive,
     archive_rows: dx.archiveRows,
     pending_conflicts: dx.conflicts.filter((c) => !dx.conflictVerdicts[c.id]),
+    // blocking_errors：mock 不覆盖此字段（S28 契约增量）——error 档阻断卡片是真实后端能力，
+    // mock 场景不造 error 档数据（字段缺省 → 卡片不渲染）；若需 mock 演示 error 档，在此补构造。
     submissions: dx.submissions,
     progress: dx.status === 'executing' || dx.status === 'assembling' ? computeProgress(dx) ?? undefined : undefined,
     error_detail: dx.status.startsWith('failed_at')

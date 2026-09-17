@@ -124,7 +124,7 @@ export default function ArchiveDrawer({
 
   /** 确认：有修改 → 生成整表修正稿交给工作台预填（走 /data 提交）。
    *  无修改：冲突场景沿用 verdict 留痕（"已查看，未修改"，11.3 幂等）；
-   *  纯 error 档场景无"维持"语义，直接返回、不落库（S28 分叉守卫） */
+   *  纯 error 档场景无"维持"语义（确认按钮已禁用，此处 onClose 仅为防御性兜底） */
   const handleConfirm = () => {
     if (editedN > 0) {
       onApplyFix(buildFixPayload());
@@ -240,10 +240,17 @@ export default function ArchiveDrawer({
               + '核对后点「提交校验」才真正入档（8.3：提交体 = 该表最新全量快照，旧行作废）'
             : conflict
               ? '未修改任何数据，确认即视为"已查看并认可现有数据"（按维持留痕）'
-              : '未修改任何数据；数据错误没有"维持"选项，请修正后生成修正稿'}
+              : '数据错误没有"维持"选项——请修改数据后生成修正稿（未修改时此按钮不可用；可直接关闭本抽屉）'}
         </div>
-        <Button type="primary" loading={verdict.isPending} onClick={handleConfirm}>
-          {editedN > 0 ? '生成整表修正稿，填入提交区' : conflict ? '确认未修改，返回工作台' : '返回工作台（未修改数据）'}
+        <Button
+          type="primary"
+          // 纯 error 场景（无冲突）且未修改：禁用而非"可点但无事发生"（S28 走查反馈，
+          // 与 S25③ "UI 承诺落空"同类问题）
+          disabled={editedN === 0 && !conflict}
+          loading={verdict.isPending}
+          onClick={handleConfirm}
+        >
+          {editedN > 0 ? '生成整表修正稿，填入提交区' : conflict ? '确认未修改，返回工作台' : '错误数据无「维持」语义——请先修改数据'}
         </Button>
       </div>
     </Drawer>
