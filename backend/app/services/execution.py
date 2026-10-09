@@ -23,7 +23,7 @@ from ..llm_provider import LLMCallError
 logger = logging.getLogger("execution")
 
 QC_METHOD_ID = "QC"
-_MAX_ROWS_PER_TABLE = 20  # 注入 prompt 的每表行数上限（防 prompt 爆炸；V1 经验值）
+_MAX_ROWS_PER_TABLE = 5  # flash 刀4：20→5（prompt 数据层减重 3/4；flash改动方案.md）
 
 
 def _load_progress(raw: str | None) -> dict[str, Any]:
