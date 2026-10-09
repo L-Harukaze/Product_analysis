@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import re
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -538,6 +539,20 @@ async def run_pipeline(state: dict[str, Any], diagnosis_id: str) -> None:
         ))
 
 
+def _load_active_whitelist() -> set[str] | None:
+    """flash 刀2：V1 演示档执行白名单（config/execution.yaml）；缺省/空 = 全量档。"""
+    p = Path(__file__).resolve().parents[2] / "config" / "execution.yaml"
+    if not p.is_file():
+        return None
+    raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    wl = raw.get("active_method_whitelist")
+    if not wl:
+        return None
+    if not isinstance(wl, list) or not all(isinstance(x, str) for x in wl):
+        raise ValueError("[execution.yaml] active_method_whitelist 必须为方法编号字符串数组（flash 刀2）")
+    return set(wl)
+
+
 async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
     """POST /execute 入口：进度初始化 + status=executing + 后台任务启动（202 同步返回）。"""
     def _init(conn) -> None:
@@ -545,6 +560,24 @@ async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
             "SELECT activation_matrix_json, product_id FROM diagnoses WHERE id=?", (diagnosis_id,)
         ).fetchone()
         matrix = json.loads(d["activation_matrix_json"])
+        # flash 刀2：V1 演示档白名单——白名单外方法置"不适用"占位（12.2 显式登记，
+        # 非失败语义）；改写幂等（method 已为 None 的条目跳过）。
+        wl = _load_active_whitelist()
+        if wl is not None:
+            changed = False
+            for e in matrix:
+                m = e.get("method")
+                if m is None or m in wl:
+                    continue
+                e["method"] = None
+                tag = "V1 演示档白名单外（flash 刀2，显式登记）"
+                e["reason"] = f"{e.get('reason') or ''}｜{tag}".lstrip("｜") if e.get("reason") else tag
+                changed = True
+            if changed:
+                conn.execute(
+                    "UPDATE diagnoses SET activation_matrix_json=?, updated_at=datetime('now') WHERE id=?",
+                    (json.dumps(matrix, ensure_ascii=False), diagnosis_id),
+                )
         # 8.3 清桶规则：重放 = 执行产物作废重写（否则 R1 新数据撞旧轮唯一键）。
         # llm_call_logs 不清——审计追加语义；qc_verdicts_json 不清——11.4 裁决一次性持久化。
         conn.execute("DELETE FROM intermediate_tables WHERE diagnosis_id=?", (diagnosis_id,))
