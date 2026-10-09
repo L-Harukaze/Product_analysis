@@ -87,15 +87,9 @@
 
 ## 5. 执行形态声明
 
-**本包=轻负载包，默认单轮全流程直出**〔S20〕。负载画像：算术密度低（无 ΔCost/capture），话语拆分与时点对齐判断密集。输入>20 行需分轮时，合法切法：
+**本包=单轮直出**〔S20 轻负载语义 · flash 刀3 演示档沿用〕。执行范围：全部 STEP 一次完成；输入切片：全部声明输入表；产出：全部中间表 + 终局产出（diagnostic_items 等）。原条件分轮切法（输入超量时）见 main 分支 / tag old_version 完整版。
 
-| 轮 | 执行步骤 | 输入切片 | 产出 |
-|---|---|---|---|
-| R1 锚提取轮 | STEP 0-2 | 表E+表F+表C | anchors / ref_prices / flags |
-| R2 offset与有效性轮 | STEP 3-5 | R1中间表+表G+表B | offsets / effectiveness / 权益折算 / timeline |
-| R3 冲突装配轮 | STEP 6+诊断装配 | R1+R2全部中间表+表A(按需) | diagnostic_items / conflict_resolutions / data_gap_reports / method_xref |
-
-**执行预算**：检查点≤8；输出总规模≤5000 token；单轮目标≤10 分钟。
+**执行预算**：检查点≤8；输出总规模≤5000 token。
 
 ## 6. 包级数据契约
 
