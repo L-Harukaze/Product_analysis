@@ -29,6 +29,10 @@ export const api = {
   /** 删除诊断（列表管理：仅删诊断级数据，产品档案与已采集数据保留） */
   deleteDiagnosis: (id: string) => request<{ accepted: true }>('DELETE', `/diagnoses/${id}`),
 
+  /** 终止执行（13.1 扩展）：executing/assembling → cancelled；进程重启遗留僵尸同端点清理 */
+  cancelDiagnosis: (id: string) =>
+    request<{ accepted: true; task_cancelled: boolean }>('POST', `/diagnoses/${id}/cancel`),
+
   /** 最新版采集 prompt（6.1：打回后自动携带拒绝原因） */
   getCollectionPrompt: (id: string) =>
     request<{ prompt: string }>('GET', `/diagnoses/${id}/collection-prompt`),

@@ -519,6 +519,47 @@ def _set_method_phase_sync(conn: Any, diagnosis_id: str, method: str, phase: str
     _save_progress(conn, diagnosis_id, progress)
 
 
+# ———— 终止支持（flash 走查反馈 2026-10-09：执行中诊断无路可退 → 删除被守卫拦截形成僵尸） ————
+
+# 进程内后台任务注册表：diagnosis_id → asyncio.Task（cancel/僵尸判定用；run_pipeline finally 注销）
+_tasks: dict[str, asyncio.Task] = {}
+
+
+def cancel_execution(diagnosis_id: str) -> bool:
+    """请求取消执行后台任务（run_pipeline 捕获 CancelledError 落 cancelled）。
+
+    返回是否有活跃任务被取消；False = 进程重启遗留的僵尸状态（无任务可取消）。
+    """
+    task = _tasks.get(diagnosis_id)
+    if task is not None and not task.done():
+        task.cancel()
+        return True
+    return False
+
+
+async def mark_cancelled(diagnosis_id: str) -> None:
+    """终止落库：status=cancelled；未完成方法置 failed（终止标记，方法卡可见）。
+
+    幂等：cancel 端点（僵尸路径）与 run_pipeline（任务取消路径）都会调用，重复写一致。
+    """
+    def _write(conn) -> None:
+        progress = _load_progress(conn.execute(
+            "SELECT progress_json FROM diagnoses WHERE id=?", (diagnosis_id,)
+        ).fetchone()["progress_json"])
+        for m in progress["methods"]:
+            if m["phase"] != "done":
+                m["phase"] = "failed"
+                m["error"] = {"timeout": "-", "retries": 0, "raw": "Owner 手动终止"}
+        progress["done_n"] = sum(1 for m in progress["methods"] if m["phase"] == "done")
+        conn.execute(
+            "UPDATE diagnoses SET status='cancelled', progress_json=?, error_json=?, "
+            "updated_at=datetime('now') WHERE id=?",
+            (json.dumps(progress, ensure_ascii=False),
+             json.dumps({"reason": "Owner 手动终止"}, ensure_ascii=False), diagnosis_id),
+        )
+    await db.run(_write)
+
+
 async def run_pipeline(state: dict[str, Any], diagnosis_id: str) -> None:
     """事务 C 主流程：方法池并发 → 失败停顿/质检/装配（后台任务，异常落 failed_at(executing)，T6）。"""
     try:
@@ -531,12 +572,18 @@ async def run_pipeline(state: dict[str, Any], diagnosis_id: str) -> None:
         targets = [m["method"] for m in _method_entries(progress) if m["phase"] == "pending"]
         await asyncio.gather(*(run_method(state, diagnosis_id, m) for m in targets))
         await _finalize(state, diagnosis_id)
+    except asyncio.CancelledError:
+        # Owner 终止（cancel 端点 task.cancel()）：落 cancelled 后按 asyncio 规范续抛
+        await mark_cancelled(diagnosis_id)
+        raise
     except Exception as e:
         logger.exception("[execution] 管道异常")
         await db.run(lambda c: c.execute(
             "UPDATE diagnoses SET status=?, error_json=?, updated_at=datetime('now') WHERE id=?",
             ("failed_at(executing)", json.dumps({"raw": str(e)[:500]}, ensure_ascii=False), diagnosis_id),
         ))
+    finally:
+        _tasks.pop(diagnosis_id, None)
 
 
 def _load_active_whitelist() -> set[str] | None:
@@ -587,4 +634,4 @@ async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
             (json.dumps(init_progress(matrix), ensure_ascii=False), diagnosis_id),
         )
     await db.run(_init)
-    asyncio.create_task(run_pipeline(state, diagnosis_id))
+    _tasks[diagnosis_id] = asyncio.create_task(run_pipeline(state, diagnosis_id))

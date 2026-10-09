@@ -26,12 +26,12 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'ready', label: '待执行' },
   { key: 'executing', label: '执行中' },
   { key: 'done', label: '已完成' },
-  { key: 'failed', label: '失败' },
+  { key: 'failed', label: '失败 / 终止' },
 ];
 
 function matchFilter(s: DiagnosisSummary, f: FilterKey): boolean {
   if (f === 'all') return true;
-  if (f === 'failed') return s.status.startsWith('failed_at');
+  if (f === 'failed') return s.status.startsWith('failed_at') || s.status === 'cancelled';
   if (f === 'executing') return s.status === 'executing' || s.status === 'assembling';
   return s.status === f;
 }
@@ -52,6 +52,10 @@ export default function HomePage() {
   });
   const del = useMutation({
     mutationFn: (id: string) => api.deleteDiagnosis(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dx-list'] }),
+  });
+  const cancelMut = useMutation({
+    mutationFn: (id: string) => api.cancelDiagnosis(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dx-list'] }),
   });
 
@@ -107,7 +111,7 @@ export default function HomePage() {
     { title: '更新', dataIndex: 'updated_at', width: 110, render: (v: string) => new Date(v).toLocaleDateString('zh-CN') },
     {
       title: '操作',
-      width: 170,
+      width: 200,
       render: (_: unknown, r: DiagnosisSummary) => (
         // 外层 span 拦截行点击冒泡：整行可进工作台，但操作按钮不应触发跳转
         <span onClick={(e) => e.stopPropagation()}>
@@ -122,6 +126,24 @@ export default function HomePage() {
             </Button>
           ) : (
             <span className="dim">进入 →</span>
+          )}
+          {(r.status === 'executing' || r.status === 'assembling') && (
+            <Popconfirm
+              title="终止这条诊断的执行？"
+              description="进行中的方法将标记为失败；终止后可重新执行或删除。"
+              okText="终止"
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => cancelMut.mutate(r.diagnosis_id)}
+            >
+              <Button
+                size="small"
+                danger
+                loading={cancelMut.isPending && cancelMut.variables === r.diagnosis_id}
+              >
+                终止
+              </Button>
+            </Popconfirm>
           )}
           <Popconfirm
             title="删除这条诊断？"

@@ -865,9 +865,10 @@ L3 调用细节已定（6.3：白名单输入、五类枚举、逐条全量、�
 | `GET /api/diagnoses/{id}/collection-prompt` | 最新版采集 prompt（打回后自动携带最新拒绝原因与定位，6.1 打回条款） | `routed` | 6.1 推导 |
 | `DELETE /api/diagnoses/{id}` | 删除诊断（列表管理；仅删诊断级数据，产品档案与已采集数据跨诊断复用，7.2） | 非 `executing`/`assembling`（后台任务运行中禁止删，显式 409） | Owner 微调 2026-09-16 |
 | `POST /api/diagnoses/{id}/data` | 事务 B：数据提交（L1 校验循环） | `routed` / `ready`（11.3 修数路径：冲突裁决后 Owner 可选修数再执行） | 3.3 / 11.3 |
-| `POST /api/diagnoses/{id}/execute` | 事务 C：触发执行 | `ready` 且 L2 无 error 档、无未裁决 conflict | 3.3 / 11.3 |
+| `POST /api/diagnoses/{id}/execute` | 事务 C：触发执行 | `ready`/`failed_at(executing)`/`cancelled`（重放清桶）且 L2 无 error 档、无未裁决 conflict | 3.3 / 11.3 |
 | `POST /api/diagnoses/{id}/progress/{method}/retry` | 失败方法重试（注入上轮错误经验重跑，round 1 起覆盖写） | `executing`+该方法 `failed` | Owner 微调 2026-09-16 |
 | `POST /api/diagnoses/{id}/progress/{method}/skip` | 失败方法跳过（报告显式登记为降级域） | `executing`+该方法 `failed` | Owner 微调 2026-09-16 |
+| `POST /api/diagnoses/{id}/cancel` | 终止执行（Owner 手动：进程内有任务→task.cancel；僵尸→直接置）→ `cancelled` | `executing`/`assembling`（终止后可删/可重跑） | flash 走查 2026-10-09 |
 | `POST /api/diagnoses/{id}/conflicts/{cid}/verdict` | L2 conflict 的 Owner 裁决（维持→落库幂等生效；修数走事务 B） | `ready`+存在未裁决冲突 | 11.3 推导 |
 | `POST /api/diagnoses/{id}/qc/{qid}/verdict` | L3 QC 条目的 Owner 裁决（维持/修正，落库幂等；修正走 2.4 人肉回路） | `done`+存在该 QC 条目 | 11.4 |
 | `POST /api/diagnoses/{id}/reassemble` | 重放事务 D | `failed_at(assembling)` / `done` | 3.3 |

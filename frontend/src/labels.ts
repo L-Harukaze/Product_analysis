@@ -93,6 +93,7 @@ export const STATUS_LABELS: Record<string, string> = {
   ready: '待执行',
   executing: '分析执行中',
   assembling: '报告装配中',
+  cancelled: '已终止',
   done: '已完成',
   'failed_at(routing)': '路由失败',
   'failed_at(data)': '数据异常',

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 # ———— 状态机（3.2）：DxBaseStatus | `failed_at(${DxStage})` ————
 
 STAGES = ("routing", "data", "executing", "assembling")
-BASE_STATUSES = ("created", "routed", "ready", "executing", "assembling", "done")
+BASE_STATUSES = ("created", "routed", "ready", "executing", "assembling", "cancelled", "done")
 
 
 def failed_at(stage: str) -> str:
