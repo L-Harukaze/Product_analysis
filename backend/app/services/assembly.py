@@ -14,6 +14,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -199,11 +200,13 @@ async def assemble(
     chart_ids = [str(c["chart_id"]) for c in all_charts]
     id_set = set(chart_ids)
 
-    # 分域 7 次同构调用（单域失败不传染：回退执行引擎原始四层 + 显式登记）
-    domains_out: list[dict[str, Any]] = []
+    # 分域同构装配 · 并发化（flash 刀6：原 for 串行 → asyncio.gather）
+    # 依据：各域调用相互独立（单域失败回退机制即证明无依赖），并发受 executor 信号量约束；
+    # 共享可变列表（candidates/downgraded）在 asyncio 单线程模型下无竞态。
     candidates: list[dict[str, Any]] = []
     total = len(clusters)
-    for idx, c in enumerate(clusters, start=1):
+
+    async def _assemble_one(idx: int, c: dict[str, Any]) -> dict[str, Any]:
         budget = registry.get(c["method"]).time_limit_s
         try:
             data = await provider.call_json(
@@ -213,12 +216,10 @@ async def assemble(
                 diagnosis_id=diagnosis_id, method=ASSEMBLER_METHOD_TAG, round_no=idx,
                 timeout_s=budget, skill_version="assembly",
                 prompt_template_version=ASSEMBLER_PROMPT_VERSION,
-                validate=lambda x: _normalize_items(x, c, id_set),
+                validate=lambda x, _c=c: _normalize_items(x, _c, id_set),
             )
             items = _normalize_items(data, c, id_set)
-            for cand in (data.get("conflict_candidates") or []):
-                if isinstance(cand, dict):
-                    candidates.append(cand)
+            cands = [cand for cand in (data.get("conflict_candidates") or []) if isinstance(cand, dict)]
             note = str(data.get("note") or "")
         except LLMCallError as e:
             logger.warning("[assembly] 域 %s 装配失败，回退执行引擎原始四层（12.2 不传染）：%s",
@@ -230,8 +231,17 @@ async def assemble(
             } for it in c["items"]]
             note = f"本域装配调用失败，已回退为方法执行原始四层结论（{str(e)[:120]}）"
             downgraded.append({"method": c["method"], "reason": note})
-        domains_out.append({"domain_id": c["domain_id"], "title": c["title"],
-                            "status": "active", "items": items, **({"note": note} if note else {})})
+            cands = []
+        return {"domain_id": c["domain_id"], "title": c["title"], "status": "active",
+                "items": items, "cands": cands, "note": note}
+
+    results = await asyncio.gather(*(_assemble_one(i, c) for i, c in enumerate(clusters, start=1)))
+    domains_out: list[dict[str, Any]] = []
+    for r in results:
+        candidates.extend(r["cands"])
+        domains_out.append({"domain_id": r["domain_id"], "title": r["title"],
+                            "status": "active", "items": r["items"],
+                            **({"note": r["note"]} if r["note"] else {})})
 
     # 代码后校验（12.2 阻断项）：四层完整性 + 货币化边界 + 图表引用完整性
     for d in domains_out:
