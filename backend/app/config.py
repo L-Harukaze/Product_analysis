@@ -32,6 +32,7 @@ class RoleConfig:
         api_key_env: str = raw["api_key_env"]
         self.max_concurrency: int = int(raw["max_concurrency"])
         self.timeout_s: float | None = raw.get("timeout_s")
+        self.enable_thinking: bool | None = raw.get("enable_thinking")  # flash 刀1：None=跟随模型默认
         self.api_key = os.environ.get(api_key_env, "").strip()
         if not self.api_key:
             raise ConfigError(f"[llm.yaml] 角色 {role} 的 api_key 环境变量 {api_key_env} 为空（5.1 校验 2）")
@@ -39,6 +40,8 @@ class RoleConfig:
             raise ConfigError(f"[llm.yaml] 角色 {role} 的 max_concurrency 必须 > 0（5.1 校验 3）")
         if self.timeout_s is not None and self.timeout_s <= 0:
             raise ConfigError(f"[llm.yaml] 角色 {role} 的 timeout_s 必须为 null 或正数（5.1 校验 3）")
+        if self.enable_thinking is not None and not isinstance(self.enable_thinking, bool):
+            raise ConfigError(f"[llm.yaml] 角色 {role} 的 enable_thinking 必须为 true/false（flash 刀1）")
 
 
 def load_llm_config() -> dict[str, RoleConfig]:
