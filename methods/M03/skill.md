@@ -80,15 +80,9 @@
 
 ## 5. 执行形态声明
 
-**本包=重算术包，标准三轮分轮**（《_shared/protocol.md》第3节范式原形）：
+**本包=单轮直出**〔flash 刀3：V1 演示档减载形态〕。执行范围：全部 STEP 一次完成；输入切片：全部声明输入表；产出：全部中间表 + 终局产出（diagnostic_items 等）。原重算术包三轮分轮切法见 main 分支 / tag old_version 完整版。
 
-| 轮 | 执行步骤 | 输入切片 | 产出 | 负载类型 |
-|---|---|---|---|---|
-| R1 算术轮 | STEP 0-2 | 表A+表B+表D | ladder / increments / flags | 算术密度高，无写作负载 |
-| R2 判断轮 | STEP 3-5 | R1产出+表E+表F+表C | anchors / STEP4结论 / 权益折算 / timeline | 定性判断为主，计算少 |
-| R3 冲突装配轮 | STEP 6+诊断装配 | R1+R2全部产出+表G | diagnostic_items / conflict_resolutions / data_gap_reports / method_xref | 查账负载 |
-
-**执行预算**：检查点≤10 个；输出总规模≤6000 token；单轮目标≤10 分钟。
+**执行预算**：检查点≤10 个；输出总规模≤6000 token。
 
 ## 6. 包级数据契约
 

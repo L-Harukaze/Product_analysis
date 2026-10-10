@@ -5,7 +5,7 @@
 
 /* ———— 状态机（3.2）———— */
 export type DxStage = 'routing' | 'data' | 'executing' | 'assembling';
-export type DxBaseStatus = 'created' | 'routed' | 'ready' | 'executing' | 'assembling' | 'done';
+export type DxBaseStatus = 'created' | 'routed' | 'ready' | 'executing' | 'assembling' | 'cancelled' | 'done';
 export type DxStatus = DxBaseStatus | `failed_at(${DxStage})`;
 
 export function isFailed(s: DxStatus): s is `failed_at(${DxStage})` {

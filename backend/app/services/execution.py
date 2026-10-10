@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import re
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -23,7 +24,7 @@ from ..llm_provider import LLMCallError
 logger = logging.getLogger("execution")
 
 QC_METHOD_ID = "QC"
-_MAX_ROWS_PER_TABLE = 20  # 注入 prompt 的每表行数上限（防 prompt 爆炸；V1 经验值）
+_MAX_ROWS_PER_TABLE = 5  # flash 刀4：20→5（prompt 数据层减重 3/4；flash改动方案.md）
 
 
 def _load_progress(raw: str | None) -> dict[str, Any]:
@@ -518,6 +519,47 @@ def _set_method_phase_sync(conn: Any, diagnosis_id: str, method: str, phase: str
     _save_progress(conn, diagnosis_id, progress)
 
 
+# ———— 终止支持（flash 走查反馈 2026-10-09：执行中诊断无路可退 → 删除被守卫拦截形成僵尸） ————
+
+# 进程内后台任务注册表：diagnosis_id → asyncio.Task（cancel/僵尸判定用；run_pipeline finally 注销）
+_tasks: dict[str, asyncio.Task] = {}
+
+
+def cancel_execution(diagnosis_id: str) -> bool:
+    """请求取消执行后台任务（run_pipeline 捕获 CancelledError 落 cancelled）。
+
+    返回是否有活跃任务被取消；False = 进程重启遗留的僵尸状态（无任务可取消）。
+    """
+    task = _tasks.get(diagnosis_id)
+    if task is not None and not task.done():
+        task.cancel()
+        return True
+    return False
+
+
+async def mark_cancelled(diagnosis_id: str) -> None:
+    """终止落库：status=cancelled；未完成方法置 failed（终止标记，方法卡可见）。
+
+    幂等：cancel 端点（僵尸路径）与 run_pipeline（任务取消路径）都会调用，重复写一致。
+    """
+    def _write(conn) -> None:
+        progress = _load_progress(conn.execute(
+            "SELECT progress_json FROM diagnoses WHERE id=?", (diagnosis_id,)
+        ).fetchone()["progress_json"])
+        for m in progress["methods"]:
+            if m["phase"] != "done":
+                m["phase"] = "failed"
+                m["error"] = {"timeout": "-", "retries": 0, "raw": "Owner 手动终止"}
+        progress["done_n"] = sum(1 for m in progress["methods"] if m["phase"] == "done")
+        conn.execute(
+            "UPDATE diagnoses SET status='cancelled', progress_json=?, error_json=?, "
+            "updated_at=datetime('now') WHERE id=?",
+            (json.dumps(progress, ensure_ascii=False),
+             json.dumps({"reason": "Owner 手动终止"}, ensure_ascii=False), diagnosis_id),
+        )
+    await db.run(_write)
+
+
 async def run_pipeline(state: dict[str, Any], diagnosis_id: str) -> None:
     """事务 C 主流程：方法池并发 → 失败停顿/质检/装配（后台任务，异常落 failed_at(executing)，T6）。"""
     try:
@@ -530,12 +572,32 @@ async def run_pipeline(state: dict[str, Any], diagnosis_id: str) -> None:
         targets = [m["method"] for m in _method_entries(progress) if m["phase"] == "pending"]
         await asyncio.gather(*(run_method(state, diagnosis_id, m) for m in targets))
         await _finalize(state, diagnosis_id)
+    except asyncio.CancelledError:
+        # Owner 终止（cancel 端点 task.cancel()）：落 cancelled 后按 asyncio 规范续抛
+        await mark_cancelled(diagnosis_id)
+        raise
     except Exception as e:
         logger.exception("[execution] 管道异常")
         await db.run(lambda c: c.execute(
             "UPDATE diagnoses SET status=?, error_json=?, updated_at=datetime('now') WHERE id=?",
             ("failed_at(executing)", json.dumps({"raw": str(e)[:500]}, ensure_ascii=False), diagnosis_id),
         ))
+    finally:
+        _tasks.pop(diagnosis_id, None)
+
+
+def _load_active_whitelist() -> set[str] | None:
+    """flash 刀2：V1 演示档执行白名单（config/execution.yaml）；缺省/空 = 全量档。"""
+    p = Path(__file__).resolve().parents[2] / "config" / "execution.yaml"
+    if not p.is_file():
+        return None
+    raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    wl = raw.get("active_method_whitelist")
+    if not wl:
+        return None
+    if not isinstance(wl, list) or not all(isinstance(x, str) for x in wl):
+        raise ValueError("[execution.yaml] active_method_whitelist 必须为方法编号字符串数组（flash 刀2）")
+    return set(wl)
 
 
 async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
@@ -545,6 +607,24 @@ async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
             "SELECT activation_matrix_json, product_id FROM diagnoses WHERE id=?", (diagnosis_id,)
         ).fetchone()
         matrix = json.loads(d["activation_matrix_json"])
+        # flash 刀2：V1 演示档白名单——白名单外方法置"不适用"占位（12.2 显式登记，
+        # 非失败语义）；改写幂等（method 已为 None 的条目跳过）。
+        wl = _load_active_whitelist()
+        if wl is not None:
+            changed = False
+            for e in matrix:
+                m = e.get("method")
+                if m is None or m in wl:
+                    continue
+                e["method"] = None
+                tag = "V1 演示档白名单外（flash 刀2，显式登记）"
+                e["reason"] = f"{e.get('reason') or ''}｜{tag}".lstrip("｜") if e.get("reason") else tag
+                changed = True
+            if changed:
+                conn.execute(
+                    "UPDATE diagnoses SET activation_matrix_json=?, updated_at=datetime('now') WHERE id=?",
+                    (json.dumps(matrix, ensure_ascii=False), diagnosis_id),
+                )
         # 8.3 清桶规则：重放 = 执行产物作废重写（否则 R1 新数据撞旧轮唯一键）。
         # llm_call_logs 不清——审计追加语义；qc_verdicts_json 不清——11.4 裁决一次性持久化。
         conn.execute("DELETE FROM intermediate_tables WHERE diagnosis_id=?", (diagnosis_id,))
@@ -554,4 +634,4 @@ async def start_execution(state: dict[str, Any], diagnosis_id: str) -> None:
             (json.dumps(init_progress(matrix), ensure_ascii=False), diagnosis_id),
         )
     await db.run(_init)
-    asyncio.create_task(run_pipeline(state, diagnosis_id))
+    _tasks[diagnosis_id] = asyncio.create_task(run_pipeline(state, diagnosis_id))

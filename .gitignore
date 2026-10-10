@@ -13,6 +13,7 @@ __pycache__/
 # backend/.env 含百炼/DeepSeek API key；frontend/.env.local 是本机联调开关
 .env
 .env.local
+.png
 
 # ———— 运行数据（冒烟/演示会持续改写）————
 backend/data/

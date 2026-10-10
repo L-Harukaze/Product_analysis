@@ -4,8 +4,9 @@ roles:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen3.8-max
     api_key_env: LLM_EXECUTOR_KEY
-    max_concurrency: 8
+    max_concurrency: 3         # flash 刀5：8→3（白名单仅 3 方法，避开百炼限流）
     timeout_s: null            # null = 方法包声明优先（P-2），调用层不设全局值
+    enable_thinking: false     # flash 刀1（A/B 实测 2026-10-09：思考模式 600s 超时 0/3 零产出；关思考 76s 中位、四层全齐 3/3）
   arbiter:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen3.8-max

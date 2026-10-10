@@ -93,14 +93,16 @@ class LLMProvider:
             attempts += 1
             try:
                 async with self._semaphores[role]:
+                    payload: dict[str, Any] = {
+                        "model": cfg.model,
+                        "messages": msgs,
+                        "response_format": {"type": "json_object"},
+                    }
+                    if cfg.enable_thinking is not None:
+                        # flash 刀1：百炼思考模式开关（A/B 实测 2026-10-09：开思考 600s 超时 0/3，关思考 76s 四层全齐）
+                        payload["enable_thinking"] = cfg.enable_thinking
                     resp = await self._client(role).post(
-                        "/chat/completions",
-                        json={
-                            "model": cfg.model,
-                            "messages": msgs,
-                            "response_format": {"type": "json_object"},
-                        },
-                        timeout=effective_timeout,
+                        "/chat/completions", json=payload, timeout=effective_timeout,
                     )
                 if resp.status_code != 200:
                     raise LLMCallError(f"HTTP {resp.status_code}: {resp.text[:500]}")

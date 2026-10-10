@@ -379,6 +379,34 @@ async def delete_diagnosis(diagnosis_id: str, request: Request):
     return {"accepted": True}
 
 
+# ———— 终止（flash 走查反馈 2026-10-09：执行中无路可退 → 僵尸记录删不掉） ————
+
+@router.post("/diagnoses/{diagnosis_id}/cancel")
+async def cancel_diagnosis(diagnosis_id: str, request: Request):
+    """Owner 手动终止执行（13.1 扩展）。守卫：executing/assembling。
+
+    - 进程内有活跃后台任务 → task.cancel()（run_pipeline 捕获 CancelledError 落 cancelled）
+    - 无任务（进程重启遗留僵尸）→ 直接落 cancelled
+    - cancelled 可删除（DELETE 守卫不拦）；execute 守卫放行 cancelled → 可清桶重跑
+    """
+    from ..services.execution import cancel_execution, mark_cancelled
+
+    def _read(conn):
+        return conn.execute("SELECT status FROM diagnoses WHERE id=?", (diagnosis_id,)).fetchone()
+    row = await db.run(_read)
+    if row is None:
+        raise HTTPException(status_code=404, detail={"reason": "diagnosis 不存在"})
+    if row["status"] not in ("executing", "assembling"):
+        raise await _http_409(
+            f"仅执行中/装配中的诊断可终止（当前 {row['status']}）",
+            ["executing", "assembling"], row["status"],
+        )
+    task_cancelled = cancel_execution(diagnosis_id)
+    if not task_cancelled:
+        await mark_cancelled(diagnosis_id)
+    return {"accepted": True, "task_cancelled": task_cancelled}
+
+
 # ———— 事务 B：数据提交 + L1 校验循环（ARCHITECTURE 3.3 / 11.2 / 13.2） ————
 
 @router.post("/diagnoses/{diagnosis_id}/data")
@@ -570,10 +598,10 @@ async def execute_diagnosis(diagnosis_id: str, request: Request):
     row, archive = await db.run(_read)
     if row is None:
         raise HTTPException(status_code=404, detail={"reason": "diagnosis 不存在"})
-    if row["status"] not in ("ready", "failed_at(executing)"):
+    if row["status"] not in ("ready", "failed_at(executing)", "cancelled"):
         raise await _http_409(
-            f"触发执行仅 ready（或 failed_at(executing) 重放）可用（当前 {row['status']}）",
-            ["ready", "failed_at(executing)"], row["status"],
+            f"触发执行仅 ready（或 failed_at(executing)/cancelled 重放）可用（当前 {row['status']}）",
+            ["ready", "failed_at(executing)", "cancelled"], row["status"],
         )
 
     # L2 不变式检查（11.3）：只查本次激活方法所需的表（needed 并集），范围可控

@@ -1,0 +1,5 @@
+# flash 刀2（flash改动方案.md §3）：V1 演示档执行白名单。
+# 语义：execute 触发时，白名单外的方法置"不适用"占位（12.2 显式登记，不静默缺席），
+#       报告分域装配走 not_applied 语义，非失败——路由判定结果保留，reason 追加登记。
+# 恢复全量档：置 null 或删除本文件。
+active_method_whitelist: [M03, M04, M08]
